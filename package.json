@@ -8,10 +8,14 @@
     "format": "oxfmt",
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "dev": "pnpm --filter functions build && concurrently -k -n functions,emulators,web \"pnpm --filter functions dev\" \"firebase emulators:start --only firestore,functions\" \"pnpm --filter web dev\"",
+    "emulators": "pnpm build && firebase emulators:start",
+    "firebase:deploy": "firebase deploy"
   },
   "devDependencies": {
     "@foldkit/oxlint-plugin": "0.15.3",
+    "concurrently": "^10.0.6",
     "firebase-tools": "^15.34.0",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.85.0"
