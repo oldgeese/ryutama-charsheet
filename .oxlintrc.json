@@ -1,0 +1,87 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["./node_modules/@foldkit/oxlint-plugin/recommended.json"],
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
+      }
+    ],
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-assertions": [
+      "error",
+      {
+        "assertionStyle": "never"
+      }
+    ],
+    "sort-imports": [
+      "error",
+      {
+        "ignoreDeclarationSort": true,
+        "ignoreCase": false
+      }
+    ]
+  },
+  "ignorePatterns": [
+    "dist/",
+    "node_modules/",
+    "repos/",
+    "**/*.d.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "**/*.config.js",
+    "**/*.config.mjs"
+  ],
+  "overrides": [
+    {
+      "files": ["functions/**", "tests/**"],
+      "rules": {
+        "foldkit/acquire-release-constructs-in-acquire-body": "off",
+        "foldkit/command-binding-matches-name": "off",
+        "foldkit/command-define-pascal-const": "off",
+        "foldkit/got-prefix-requires-submodel-payload": "off",
+        "foldkit/got-submodel-message-name": "off",
+        "foldkit/got-wrapper-carries-only-routing": "off",
+        "foldkit/keyed-required-for-mapped-rows": "off",
+        "foldkit/lazy-view-stable-references": "off",
+        "foldkit/mount-factory-must-use-element": "off",
+        "foldkit/no-array-index-view-keys": "off",
+        "foldkit/no-child-message-construction-in-root": "off",
+        "foldkit/no-direct-submodel-state-update": "off",
+        "foldkit/no-disabling-dev-guardrails": "off",
+        "foldkit/no-duplicate-onmount-per-element": "off",
+        "foldkit/no-empty-children-array": "off",
+        "foldkit/no-empty-commands-array": "off",
+        "foldkit/no-empty-to-parent-out-message": "off",
+        "foldkit/no-empty-object-tagged-call": "off",
+        "foldkit/no-hand-rolled-command-struct": "off",
+        "foldkit/no-hardcoded-route-strings": "off",
+        "foldkit/no-impure-call-at-decision-time": "off",
+        "foldkit/no-module-level-mutable-state": "off",
+        "foldkit/no-nonportable-server-globals": "off",
+        "foldkit/no-noop-message": "off",
+        "foldkit/no-prevent-default-in-stream-operator": "off",
+        "foldkit/no-raw-dom-event-attributes": "off",
+        "foldkit/no-route-query-constructor-default": "off",
+        "foldkit/no-spread-in-modify-fields": "off",
+        "foldkit/no-switch-on-message-tag": "off",
+        "foldkit/prefer-callable-message-constructor": "off",
+        "foldkit/prefer-command-mapmessage": "off",
+        "foldkit/prefer-effect-module-names": "off",
+        "foldkit/prefer-option-over-nullable-in-model": "off",
+        "foldkit/require-fold-for-child-update-result": "off",
+        "foldkit/require-rel-for-external-link": "off",
+        "foldkit/selection-submodel-factory-at-module-scope": "off",
+        "foldkit/wrap-child-output-in-got-message": "off"
+      }
+    }
+  ]
+}

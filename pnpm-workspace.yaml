@@ -1,0 +1,8 @@
+packages:
+  - 'apps/*'
+  - 'functions'
+allowBuilds:
+  msgpackr-extract: false
+  '@firebase/util': false
+  protobufjs: false
+  re2: false
