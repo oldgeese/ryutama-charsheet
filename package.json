@@ -1,0 +1,18 @@
+{
+  "name": "ryutama-charsheet",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "scripts": {
+    "lint": "oxlint apps/web/src",
+    "format": "oxfmt",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.85.0",
+    "@foldkit/oxlint-plugin": "0.15.3"
+  }
+}

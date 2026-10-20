@@ -150,3 +150,10 @@ vite.config.ts.timestamp-*
 
 # temp
 /tmp/
+# Project
+functions/lib/
+repos/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+.superpowers/
