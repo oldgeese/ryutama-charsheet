@@ -1,57 +1,52 @@
-import { click, expect, given, role, scene, text } from 'foldkit/scene'
+import { Command, click, expect, given, role, scene, text } from 'foldkit/scene'
 import { describe, test } from 'vitest'
 
-import { type Model, update, view } from './main'
-
-const initialModel: Model = { count: 0 }
+import { CallPing } from './command'
+import { Message } from './message'
+import { Ping } from './model'
+import { update } from './update'
+import { view } from './view'
 
 describe('view', () => {
-  test('renders the initial count and three buttons', () => {
+  test('idle shows an enabled Ping button and no result', () => {
     scene(
       { update, view },
-      given(initialModel),
-      expect(text('0')).toExist(),
-      expect(role('button', { name: '+' })).toExist(),
-      expect(role('button', { name: '-' })).toExist(),
-      expect(role('button', { name: 'Reset' })).toExist(),
+      given({ ping: Ping.PingIdle() }),
+      expect(role('button', { name: 'Ping' })).not.toBeDisabled(),
+      expect(text('pong', { exact: false })).not.toExist(),
+      expect(text('エラー:', { exact: false })).not.toExist(),
     )
   })
 
-  test('clicking + increments the displayed count', () => {
+  test('clicking Ping shows the loading state, then the result', () => {
     scene(
       { update, view },
-      given(initialModel),
-      click(role('button', { name: '+' })),
-      expect(text('1')).toExist(),
-      click(role('button', { name: '+' })),
-      expect(text('2')).toExist(),
+      given({ ping: Ping.PingIdle() }),
+      click(role('button', { name: 'Ping' })),
+      expect(role('button', { name: '送信中…' })).toBeDisabled(),
+      Command.resolve(
+        CallPing,
+        Message.SucceededPing({
+          message: 'pong',
+          at: '2026-10-20T00:00:00.000Z',
+        }),
+      ),
+      expect(text('pong (2026-10-20T00:00:00.000Z)')).toExist(),
+      expect(role('button', { name: 'Ping' })).not.toBeDisabled(),
     )
   })
 
-  test('clicking - decrements the displayed count', () => {
+  test('failure shows the code and message', () => {
     scene(
       { update, view },
-      given({ count: 3 }),
-      click(role('button', { name: '-' })),
-      expect(text('2')).toExist(),
-    )
-  })
-
-  test('clicking - past zero produces a negative count', () => {
-    scene(
-      { update, view },
-      given(initialModel),
-      click(role('button', { name: '-' })),
-      expect(text('-1')).toExist(),
-    )
-  })
-
-  test('Reset returns the count to zero', () => {
-    scene(
-      { update, view },
-      given({ count: 42 }),
-      click(role('button', { name: 'Reset' })),
-      expect(text('0')).toExist(),
+      given({
+        ping: Ping.PingFailure({
+          code: 'functions/unavailable',
+          message: 'down',
+        }),
+      }),
+      expect(text('エラー: functions/unavailable down')).toExist(),
+      expect(role('button', { name: 'Ping' })).not.toBeDisabled(),
     )
   })
 })
