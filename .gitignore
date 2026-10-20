@@ -158,3 +158,4 @@ firestore-debug.log*
 ui-debug.log*
 .superpowers/
 !.env.development
+!.env.emulator

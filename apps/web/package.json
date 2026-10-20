@@ -7,7 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:emulator": "vite build --mode emulator"
   },
   "dependencies": {
     "@effect/platform-browser": "4.0.0",

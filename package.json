@@ -10,7 +10,7 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "dev": "pnpm --filter functions build && concurrently -k -n functions,emulators,web \"pnpm --filter functions dev\" \"firebase emulators:start --only firestore,functions\" \"pnpm --filter web dev\"",
-    "emulators": "pnpm build && firebase emulators:start",
+    "emulators": "pnpm --filter functions build && pnpm --filter web build:emulator && firebase emulators:start",
     "firebase:deploy": "firebase deploy",
     "test:emulator": "firebase emulators:exec --only firestore \"vitest run\""
   },
