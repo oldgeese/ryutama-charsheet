@@ -1,25 +1,19 @@
 import { Effect, Schema } from 'effect'
 import { Command } from 'foldkit'
+import { load, pushUrl } from 'foldkit/navigation'
 
-import { FirebaseService } from './firebase/service'
 import { Message } from './message'
 
-const PingResponse = Schema.Struct({
-  message: Schema.String,
-  at: Schema.String,
+export const NavigateInternal = Command.define('NavigateInternal', {
+  args: { url: Schema.String },
+  messages: [Message.CompletedNavigateInternal],
+  execute: ({ url }) =>
+    pushUrl(url).pipe(Effect.as(Message.CompletedNavigateInternal())),
 })
 
-export const CallPing = Command.define('CallPing', {
-  messages: [Message.SucceededPing, Message.FailedPing],
-  execute: Effect.gen(function* () {
-    const firebase = yield* FirebaseService
-    const response = yield* firebase.call('ping', {}, PingResponse)
-    return Message.SucceededPing(response)
-  }).pipe(
-    Effect.catch(error =>
-      Effect.succeed(
-        Message.FailedPing({ code: error.code, message: error.message }),
-      ),
-    ),
-  ),
+export const LoadExternal = Command.define('LoadExternal', {
+  args: { href: Schema.String },
+  messages: [Message.CompletedLoadExternal],
+  execute: ({ href }) =>
+    load(href).pipe(Effect.as(Message.CompletedLoadExternal())),
 })

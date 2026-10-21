@@ -1,84 +1,95 @@
+import { Option } from 'effect'
 import { Command, given, message, model, story } from 'foldkit/story'
+import { type Url, fromString } from 'foldkit/url'
 import { describe, expect, test } from 'vitest'
 
-import { CallPing } from './command'
+import { NavigateInternal } from './command'
+import { init } from './main'
 import { Message } from './message'
-import { type Model, Ping } from './model'
+import { type Model } from './model'
+import { Top } from './page'
+import { AppRoute } from './route'
 import { update } from './update'
 
-const idle: Model = { ping: Ping.PingIdle() }
+const url = (path: string): Url =>
+  Option.getOrThrowWith(
+    fromString(`http://localhost${path}`),
+    () => new Error(`Failed to parse url: ${path}`),
+  )
+
+const onCharacter: Model = {
+  route: AppRoute.Character({ id: 'a' }),
+  topPage: {
+    searchInput: 'ル',
+    characters: Top.Characters.Loaded({ characters: [] }),
+  },
+}
+
+describe('init', () => {
+  test('loads the character list on the top page', () => {
+    const init_ = init(url('/'))
+    expect(init_.model.route).toEqual(AppRoute.Top())
+    expect(init_.model.topPage.characters).toEqual(Top.Characters.Loading())
+    expect(init_.commands).toHaveLength(1)
+  })
+
+  test('does not load the list on other pages', () => {
+    const init_ = init(url('/characters/a'))
+    expect(init_.model.route).toEqual(AppRoute.Character({ id: 'a' }))
+    expect(init_.model.topPage.characters).toEqual(Top.Characters.NotLoaded())
+    expect(init_.commands).toBeUndefined()
+  })
+})
 
 describe('update', () => {
-  test('ClickedPing starts loading and calls ping', () => {
+  test('ClickedLink to an internal url pushes it', () => {
     story(
       update,
-      given(idle),
-      message(Message.ClickedPing()),
-      Command.expectExact(CallPing),
-      model(model => {
-        expect(model.ping._tag).toBe('PingLoading')
-      }),
-      Command.resolve(
-        CallPing,
-        Message.SucceededPing({ message: 'pong', at: 't' }),
-      ),
-    )
-  })
-
-  test('SucceededPing shows the response', () => {
-    story(
-      update,
-      given(idle),
-      message(Message.ClickedPing()),
-      Command.resolve(
-        CallPing,
-        Message.SucceededPing({
-          message: 'pong',
-          at: '2026-10-20T00:00:00.000Z',
+      given(onCharacter),
+      message(
+        Message.ClickedLink({
+          request: { _tag: 'Internal', url: url('/characters/new') },
         }),
       ),
-      model(model => {
-        expect(model.ping).toEqual(
-          Ping.PingSuccess({ message: 'pong', at: '2026-10-20T00:00:00.000Z' }),
-        )
-      }),
-    )
-  })
-
-  test('FailedPing keeps the error and allows another ping', () => {
-    story(
-      update,
-      given(idle),
-      message(Message.ClickedPing()),
-      Command.resolve(
-        CallPing,
-        Message.FailedPing({ code: 'functions/unavailable', message: 'down' }),
+      Command.expectExact(
+        NavigateInternal({ url: 'http://localhost/characters/new' }),
       ),
-      model(model => {
-        expect(model.ping).toEqual(
-          Ping.PingFailure({ code: 'functions/unavailable', message: 'down' }),
-        )
-      }),
-      message(Message.ClickedPing()),
-      Command.expectExact(CallPing),
-      model(model => {
-        expect(model.ping._tag).toBe('PingLoading')
-      }),
       Command.resolve(
-        CallPing,
-        Message.SucceededPing({ message: 'pong', at: 't' }),
+        NavigateInternal({ url: 'http://localhost/characters/new' }),
+        Message.CompletedNavigateInternal(),
       ),
     )
   })
 
-  test('ClickedPing while loading is ignored', () => {
+  test('coming back to the top page reloads the list and keeps the search', () => {
     story(
       update,
-      given({ ping: Ping.PingLoading() }),
-      message(Message.ClickedPing()),
+      given(onCharacter),
+      message(Message.ChangedUrl({ url: url('/') })),
+      model(model => {
+        expect(model.route).toEqual(AppRoute.Top())
+        expect(model.topPage).toEqual({
+          searchInput: 'ル',
+          characters: Top.Characters.Loading(),
+        })
+      }),
+      Command.expectExact(Top.FetchCharacters),
+      Command.resolve(
+        Top.FetchCharacters,
+        Top.Message.SucceededFetchCharacters({ characters: [] }),
+      ),
+    )
+  })
+
+  test('moving to another page only changes the route', () => {
+    story(
+      update,
+      given(onCharacter),
+      message(Message.ChangedUrl({ url: url('/characters/a/edit') })),
       Command.expectNone(),
       model(model => {
-        expect(model.ping._tag).toBe('PingLoading')
+        expect(model.route).toEqual(AppRoute.EditCharacter({ id: 'a' }))
+        expect(model.topPage).toEqual(onCharacter.topPage)
       }),
     )
   })
