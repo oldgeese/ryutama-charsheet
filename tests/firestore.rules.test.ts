@@ -1,12 +1,13 @@
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore'
 import { readFileSync } from 'node:fs'
+import { afterAll, beforeAll, describe, test } from 'vitest'
 
 import {
   type RulesTestEnvironment,
   assertFails,
+  assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { afterAll, beforeAll, describe, test } from 'vitest'
 
 let env: RulesTestEnvironment
 
@@ -23,14 +24,33 @@ beforeAll(async () => {
 
 afterAll(() => env.cleanup())
 
+const PUBLIC = ['characters', 'characterSummaries']
+
 describe('firestore.rules', () => {
-  test('anyone is denied reading a character', async () => {
+  test.each(PUBLIC)('anyone can read %s', async name => {
     const db = env.unauthenticatedContext().firestore()
-    await assertFails(getDoc(doc(db, 'characters/x')))
+    await assertSucceeds(getDoc(doc(db, `${name}/x`)))
+    await assertSucceeds(getDocs(collection(db, name)))
   })
 
-  test('anyone is denied writing a character', async () => {
+  test.each(PUBLIC)('anyone is denied writing %s', async name => {
     const db = env.unauthenticatedContext().firestore()
-    await assertFails(setDoc(doc(db, 'characters/x'), { name: 'test' }))
+    await assertFails(setDoc(doc(db, `${name}/x`), { name: 'test' }))
+  })
+
+  test('anyone is denied reading a character secret', async () => {
+    const db = env.unauthenticatedContext().firestore()
+    await assertFails(getDoc(doc(db, 'characterSecrets/x')))
+    await assertFails(getDocs(collection(db, 'characterSecrets')))
+  })
+
+  test('anyone is denied writing a character secret', async () => {
+    const db = env.unauthenticatedContext().firestore()
+    await assertFails(setDoc(doc(db, 'characterSecrets/x'), { hash: 'x' }))
+  })
+
+  test('anyone is denied other collections', async () => {
+    const db = env.unauthenticatedContext().firestore()
+    await assertFails(getDoc(doc(db, 'others/x')))
   })
 })

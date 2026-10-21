@@ -1,7 +1,15 @@
 rules_version = '2';
 
+// 書き込みはすべて Cloud Functions（Admin SDK）から行う。
+// characterSecrets はパスワードのハッシュを持つので、クライアントからは読ませない
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /characters/{id} {
+      allow read: if true;
+    }
+    match /characterSummaries/{id} {
+      allow read: if true;
+    }
     match /{document=**} {
       allow read, write: if false;
     }
