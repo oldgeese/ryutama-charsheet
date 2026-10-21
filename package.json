@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@12.14.0",
   "scripts": {
-    "lint": "oxlint apps/web/src functions/src tests",
+    "lint": "oxlint apps/web/src functions/src packages/*/src tests",
     "format": "oxfmt",
     "typecheck": "pnpm -r typecheck && tsc -p tsconfig.json",
     "build": "pnpm -r build",
