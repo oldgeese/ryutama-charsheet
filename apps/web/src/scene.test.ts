@@ -1,13 +1,19 @@
 import { expect, given, role, scene, text } from 'foldkit/scene'
 import { describe, test } from 'vitest'
 
+import { emptySheet } from '@ryutama/character'
+
 import { type Model } from './model'
-import { Top } from './page'
+import { CharacterPage, Top } from './page'
 import { AppRoute } from './route'
 import { update } from './update'
 import { view } from './view'
 
-const on = (route: AppRoute): Model => ({ route, topPage: Top.notLoaded })
+const on = (route: AppRoute): Model => ({
+  route,
+  topPage: Top.notLoaded,
+  characterPage: CharacterPage.notLoaded,
+})
 
 describe('view', () => {
   test('the site title links to the top page', () => {
@@ -29,9 +35,24 @@ describe('view', () => {
           searchInput: '',
           characters: Top.Characters.Loaded({ characters: [] }),
         },
+        characterPage: CharacterPage.notLoaded,
       }),
       expect(role('link', { name: '新規作成' })).toExist(),
       expect(text('まだキャラクターがいません')).toExist(),
+    )
+  })
+
+  test('a character page shows the sheet', () => {
+    scene(
+      { update, view },
+      given({
+        ...on(AppRoute.Character({ id: 'a' })),
+        characterPage: CharacterPage.Sheet.Loaded({
+          id: 'a',
+          sheet: { ...emptySheet, characterName: 'ルル' },
+        }),
+      }),
+      expect(role('heading', { name: 'ルル' })).toExist(),
     )
   })
 

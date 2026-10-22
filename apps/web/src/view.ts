@@ -2,7 +2,7 @@ import { type Document, type Html, type HtmlBuilder } from 'foldkit/html'
 
 import { Message } from './message'
 import type { Model } from './model'
-import { Top } from './page'
+import { CharacterPage, Top } from './page'
 import { AppRoute, topRouter } from './route'
 
 const TITLE = 'りゅうたま キャラクターシート'
@@ -30,7 +30,14 @@ const pageView = (model: Model, h: HtmlBuilder<Message>): Html =>
         toParentMessage: message => Message.GotTopMessage({ message }),
       }),
     NewCharacter: () => placeholderView('キャラクターの新規作成', h),
-    Character: () => placeholderView('キャラクターの詳細', h),
+    Character: () =>
+      h.submodel({
+        slotId: 'character',
+        model: model.characterPage,
+        view: CharacterPage.view,
+        toParentMessage: message =>
+          Message.GotCharacterPageMessage({ message }),
+      }),
     EditCharacter: () => placeholderView('キャラクターの編集', h),
     NotFound: () =>
       h.div(
