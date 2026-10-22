@@ -53,7 +53,7 @@ UI は https://dnd35-character-database.oldgeese.net/ を参考にする。
 
 ## ② インクリメンタルサーチ
 
-- トップページを開いたときに、`characters` の一覧用の項目を全部読み込み、クライアント側で絞り込む
+- トップページを開いたときに、`characterSummaries` を全部読み込み、クライアント側で絞り込む
 - 検索の対象: キャラクター名、PL名、クラス、タイプ。部分一致で、大文字と小文字は区別しない
 - 入力するたびに絞り込む
 - 想定している規模は数百件程度まで。それを超えたら作り直す
@@ -64,19 +64,20 @@ UI は https://dnd35-character-database.oldgeese.net/ を参考にする。
 
 | パス | 中身 | クライアントの読み込み | クライアントの書き込み |
 |---|---|---|---|
-| `characters/{id}` | シート本体、一覧用の項目、作成日時 | 許可 | 拒否 |
+| `characters/{id}` | シート本体（`{ sheet }`） | 許可 | 拒否 |
+| `characterSummaries/{id}` | 一覧用の項目と作成日時（`createdAt`） | 許可 | 拒否 |
 | `characterSecrets/{id}` | パスワードのハッシュとソルト | 拒否 | 拒否 |
 
-- `characterSecrets` の ID は対応する `characters` の ID と同じにする
-- 一覧用の項目（キャラクター名、PL名、クラス、タイプ、レベル）は、シート本体とは別のフィールドに置く。トップページでシート本体まで読み込まずに済むようにするため
+- 3 つのコレクションは同じ ID を使う
+- 一覧用の項目（キャラクター名、PL名、クラス、タイプ、レベル）は別のコレクションに置く。Firestore の Web SDK はドキュメントの一部のフィールドだけを読めないので、トップページでシート本体まで読み込まずに済むようにするため（#6 で変更）
 
 ### 書き込み用の Functions（callable、`asia-northeast1`）
 
 | 関数 | 入力 | 動作 |
 |---|---|---|
-| `createCharacter` | シート、パスワード | ハッシュを作り、`characters` と `characterSecrets` を 1 つのトランザクションで書く。新しい ID を返す |
-| `updateCharacter` | ID、シート、パスワード | 照合してから `characters` を上書きする |
-| `duplicateCharacter` | ID、パスワード | 照合してから `characters` と `characterSecrets` を新しい ID でコピーする。新しい ID を返す |
+| `createCharacter` | シート、パスワード | ハッシュを作り、3 つのコレクションを 1 つのバッチで書く。新しい ID を返す |
+| `updateCharacter` | ID、シート、パスワード | 照合してから `characters` と `characterSummaries` を上書きする（`createdAt` は変えない） |
+| `duplicateCharacter` | ID、パスワード | 照合してから 3 つのコレクションを新しい ID でコピーする。`createdAt` は複製した日時にする。新しい ID を返す |
 
 - 書き込みには Admin SDK を使う。Firestore ルールは通らない
 - 入力は Functions 側でも Schema で検証する

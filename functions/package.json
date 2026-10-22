@@ -7,8 +7,8 @@
     "node": "24"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=lib/index.js --external:firebase-admin --external:firebase-functions",
+    "dev": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --outfile=lib/index.js --external:firebase-admin --external:firebase-functions --watch=forever",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -17,7 +17,10 @@
     "firebase-functions": "^7.4.0"
   },
   "devDependencies": {
+    "@ryutama/character": "workspace:*",
     "@types/node": "^24.19.2",
+    "effect": "4.0.0",
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
   }
