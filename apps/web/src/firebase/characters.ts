@@ -1,7 +1,18 @@
-import { Array, Effect, Schema } from 'effect'
-import { collection, getDocs, orderBy, query } from 'firebase/firestore'
+import { Array, Effect, Option, Schema } from 'effect'
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+} from 'firebase/firestore'
 
-import { CHARACTER_SUMMARIES } from '@ryutama/character'
+import {
+  CHARACTERS,
+  CHARACTER_SUMMARIES,
+  CharacterSheet,
+} from '@ryutama/character'
 
 import { ListedCharacter } from '../character'
 import { FirebaseService } from './service'
@@ -27,8 +38,36 @@ export const fetchListedCharacters = Effect.gen(function* () {
     catch: error => new FirestoreReadError({ message: String(error) }),
   })
   return Array.getSomes(
-    Array.map(snapshot.docs, doc =>
-      decodeListedCharacter({ ...doc.data(), id: doc.id }),
+    Array.map(snapshot.docs, summary =>
+      decodeListedCharacter({ ...summary.data(), id: summary.id }),
     ),
   )
 })
+
+const decodeStoredCharacter = Schema.decodeUnknownOption(
+  Schema.Struct({ sheet: CharacterSheet }),
+)
+
+// ドキュメントがなければ Option.none を返す
+export const fetchCharacter = (id: string) =>
+  Effect.gen(function* () {
+    const { firestore } = yield* FirebaseService
+    const snapshot = yield* Effect.tryPromise({
+      try: () => getDoc(doc(firestore, CHARACTERS, id)),
+      catch: error => new FirestoreReadError({ message: String(error) }),
+    })
+    if (!snapshot.exists()) {
+      return Option.none<CharacterSheet>()
+    }
+    const { sheet } = yield* Option.match(
+      decodeStoredCharacter(snapshot.data()),
+      {
+        onNone: () =>
+          Effect.fail(
+            new FirestoreReadError({ message: 'シートのデータが壊れています' }),
+          ),
+        onSome: Effect.succeed,
+      },
+    )
+    return Option.some(sheet)
+  })

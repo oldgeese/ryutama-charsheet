@@ -5,7 +5,7 @@ import type { Url } from 'foldkit/url'
 import type { FirebaseService } from './firebase/service'
 import { Message } from './message'
 import type { Model } from './model'
-import { Top } from './page'
+import { CharacterPage, Top } from './page'
 import { AppRoute, urlToAppRoute } from './route'
 
 export const init: Runtime.RoutingApplicationInit<
@@ -15,10 +15,24 @@ export const init: Runtime.RoutingApplicationInit<
   FirebaseService
 > = (url: Url) => {
   const route = urlToAppRoute(url)
-  return AppRoute.guards.Top(route)
-    ? Update.foldChildInit(Top.init(), {
-        toParentModel: topPage => ({ route, topPage }),
+  const pages = {
+    topPage: Top.notLoaded,
+    characterPage: CharacterPage.notLoaded,
+  }
+  return AppRoute.match(route, {
+    Top: () =>
+      Update.foldChildInit(Top.init(), {
+        toParentModel: topPage => ({ ...pages, route, topPage }),
         toParentMessage: message => Message.GotTopMessage({ message }),
-      })
-    : { model: { route, topPage: Top.notLoaded } }
+      }),
+    Character: ({ id }) =>
+      Update.foldChildInit(CharacterPage.init(id), {
+        toParentModel: characterPage => ({ ...pages, route, characterPage }),
+        toParentMessage: message =>
+          Message.GotCharacterPageMessage({ message }),
+      }),
+    NewCharacter: () => ({ model: { ...pages, route } }),
+    EditCharacter: () => ({ model: { ...pages, route } }),
+    NotFound: () => ({ model: { ...pages, route } }),
+  })
 }

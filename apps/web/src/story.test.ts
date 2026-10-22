@@ -3,11 +3,13 @@ import { Command, given, message, model, story } from 'foldkit/story'
 import { type Url, fromString } from 'foldkit/url'
 import { describe, expect, test } from 'vitest'
 
+import { emptySheet } from '@ryutama/character'
+
 import { NavigateInternal } from './command'
 import { init } from './main'
 import { Message } from './message'
 import { type Model } from './model'
-import { Top } from './page'
+import { CharacterPage, Top } from './page'
 import { AppRoute } from './route'
 import { update } from './update'
 
@@ -23,6 +25,7 @@ const onCharacter: Model = {
     searchInput: 'ル',
     characters: Top.Characters.Loaded({ characters: [] }),
   },
+  characterPage: CharacterPage.Sheet.Loaded({ id: 'a', sheet: emptySheet }),
 }
 
 describe('init', () => {
@@ -33,10 +36,21 @@ describe('init', () => {
     expect(init_.commands).toHaveLength(1)
   })
 
-  test('does not load the list on other pages', () => {
+  test('loads the character on its page', () => {
     const init_ = init(url('/characters/a'))
     expect(init_.model.route).toEqual(AppRoute.Character({ id: 'a' }))
     expect(init_.model.topPage.characters).toEqual(Top.Characters.NotLoaded())
+    expect(init_.model.characterPage).toEqual(
+      CharacterPage.Sheet.Loading({ id: 'a' }),
+    )
+    expect(init_.commands).toHaveLength(1)
+  })
+
+  test('loads nothing on pages that are not built yet', () => {
+    const init_ = init(url('/characters/a/edit'))
+    expect(init_.model.route).toEqual(AppRoute.EditCharacter({ id: 'a' }))
+    expect(init_.model.topPage.characters).toEqual(Top.Characters.NotLoaded())
+    expect(init_.model.characterPage).toEqual(CharacterPage.Sheet.NotLoaded())
     expect(init_.commands).toBeUndefined()
   })
 })
@@ -81,6 +95,30 @@ describe('update', () => {
     )
   })
 
+  test('moving to a character page loads that character', () => {
+    story(
+      update,
+      given(onCharacter),
+      message(Message.ChangedUrl({ url: url('/characters/b') })),
+      model(model => {
+        expect(model.route).toEqual(AppRoute.Character({ id: 'b' }))
+        expect(model.characterPage).toEqual(
+          CharacterPage.Sheet.Loading({ id: 'b' }),
+        )
+      }),
+      Command.expectExact(CharacterPage.FetchCharacter({ id: 'b' })),
+      Command.resolve(
+        CharacterPage.FetchCharacter({ id: 'b' }),
+        CharacterPage.Message.MissingCharacter({ id: 'b' }),
+      ),
+      model(model => {
+        expect(model.characterPage).toEqual(
+          CharacterPage.Sheet.NotFound({ id: 'b' }),
+        )
+      }),
+    )
+  })
+
   test('moving to another page only changes the route', () => {
     story(
       update,
@@ -90,6 +128,7 @@ describe('update', () => {
       model(model => {
         expect(model.route).toEqual(AppRoute.EditCharacter({ id: 'a' }))
         expect(model.topPage).toEqual(onCharacter.topPage)
+        expect(model.characterPage).toEqual(onCharacter.characterPage)
       }),
     )
   })
