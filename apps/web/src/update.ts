@@ -8,7 +8,7 @@ import { LoadExternal, NavigateInternal } from './command'
 import type { FirebaseService } from './firebase/service'
 import { Message } from './message'
 import type { Model } from './model'
-import { CharacterPage, Top } from './page'
+import { CharacterPage, EditorPage, Top } from './page'
 import { AppRoute, urlToAppRoute } from './route'
 
 export type UpdateReturn = Update.Return<Model, Message, FirebaseService>
@@ -57,6 +57,37 @@ const loadCharacterPage = Update.foldChild({
   toParentMessage: toCharacterPageMessage,
 })
 
+const toEditorPageMessage = (message: EditorPage.Message) =>
+  Message.GotEditorPageMessage({ message })
+
+const readEditorPage = (model: Model) => Option.some(model.editorPage)
+
+const writeEditorPage = (
+  model: Model,
+  nextEditorPage: EditorPage.Model,
+): Model => modifyFields(model, { editorPage: () => nextEditorPage })
+
+const foldEditorPage = Update.foldChild({
+  update: EditorPage.update,
+  read: readEditorPage,
+  write: writeEditorPage,
+  toParentMessage: toEditorPageMessage,
+})
+
+const startNewCharacter = Update.foldChildStep({
+  update: () => EditorPage.initNew(),
+  read: readEditorPage,
+  write: writeEditorPage,
+  toParentMessage: toEditorPageMessage,
+})
+
+const loadEditorPage = Update.foldChild({
+  update: (_editorPage: EditorPage.Model, id: string) => EditorPage.load(id),
+  read: readEditorPage,
+  write: writeEditorPage,
+  toParentMessage: toEditorPageMessage,
+})
+
 const setRoute =
   (nextRoute: AppRoute): Update.Step<Model, Message, FirebaseService> =>
   model => ({ model: modifyFields(model, { route: () => nextRoute }) })
@@ -81,8 +112,10 @@ export const update = (model: Model, message: Message) =>
         Top: () => Update.combine(model, [setRoute(nextRoute), reloadTop]),
         Character: ({ id }) =>
           Update.combine(model, [setRoute(nextRoute), loadCharacterPage(id)]),
-        NewCharacter: () => setRoute(nextRoute)(model),
-        EditCharacter: () => setRoute(nextRoute)(model),
+        NewCharacter: () =>
+          Update.combine(model, [setRoute(nextRoute), startNewCharacter]),
+        EditCharacter: ({ id }) =>
+          Update.combine(model, [setRoute(nextRoute), loadEditorPage(id)]),
         NotFound: () => setRoute(nextRoute)(model),
       })
     },
@@ -92,4 +125,5 @@ export const update = (model: Model, message: Message) =>
 
     GotTopMessage: ({ message }) => foldTop(model, message),
     GotCharacterPageMessage: ({ message }) => foldCharacterPage(model, message),
+    GotEditorPageMessage: ({ message }) => foldEditorPage(model, message),
   })

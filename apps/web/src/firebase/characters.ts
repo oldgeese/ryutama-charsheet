@@ -11,11 +11,14 @@ import {
 import {
   CHARACTERS,
   CHARACTER_SUMMARIES,
+  CharacterIdResponse,
   CharacterSheet,
+  type CreateCharacterRequest,
+  type UpdateCharacterRequest,
 } from '@ryutama/character'
 
 import { ListedCharacter } from '../character'
-import { FirebaseService } from './service'
+import { type FirebaseCallError, FirebaseService } from './service'
 
 export class FirestoreReadError extends Schema.TaggedError<FirestoreReadError>()(
   'FirestoreReadError',
@@ -71,3 +74,27 @@ export const fetchCharacter = (id: string) =>
     )
     return Option.some(sheet)
   })
+
+export const createCharacter = (request: CreateCharacterRequest) =>
+  Effect.gen(function* () {
+    const { call } = yield* FirebaseService
+    return yield* call('createCharacter', request, CharacterIdResponse)
+  })
+
+export const updateCharacter = (request: UpdateCharacterRequest) =>
+  Effect.gen(function* () {
+    const { call } = yield* FirebaseService
+    return yield* call('updateCharacter', request, CharacterIdResponse)
+  })
+
+// NOTE: Functions のメッセージには環境によって「 [403]」のような後ろ書きが付くので、決まったエラーは文言をこちらで持つ
+export const saveErrorMessage = (error: FirebaseCallError): string => {
+  switch (error.code) {
+    case 'functions/permission-denied':
+      return 'パスワードが違います'
+    case 'functions/not-found':
+      return 'キャラクターが見つかりません'
+    default:
+      return `保存できませんでした: ${error.message}`
+  }
+}
