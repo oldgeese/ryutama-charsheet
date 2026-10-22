@@ -1,53 +1,68 @@
-import { Document, type Html, type HtmlBuilder } from 'foldkit/html'
-
-import { Button } from '@foldkit/ui'
+import { type Document, type Html, type HtmlBuilder } from 'foldkit/html'
 
 import { Message } from './message'
-import { type Model, Ping } from './model'
+import type { Model } from './model'
+import { Top } from './page'
+import { AppRoute, topRouter } from './route'
 
 const TITLE = 'りゅうたま キャラクターシート'
 
-export const view = (model: Model, h: HtmlBuilder<Message>): Document => {
-  const isLoading = Ping.guards.PingLoading(model.ping)
-  return {
-    title: TITLE,
-    body: h.main(
-      [
-        h.Class(
-          'min-h-screen bg-white flex flex-col items-center justify-center gap-6 p-6',
-        ),
-      ],
-      [
-        h.h1([h.Class('text-3xl font-bold text-gray-800')], [TITLE]),
-        Button.view(
-          {
-            onClick: Message.ClickedPing(),
-            isDisabled: isLoading,
-            toView: attributes =>
-              h.button(
-                [...attributes.button, h.Class(buttonStyle)],
-                [isLoading ? '送信中…' : 'Ping'],
-              ),
-          },
-          h,
-        ),
-        pingResultView(model.ping, h),
-      ],
-    ),
-  }
-}
+const placeholderView = (heading: string, h: HtmlBuilder<Message>): Html =>
+  h.div(
+    [h.Class('space-y-4')],
+    [
+      h.h2([h.Class('text-2xl font-bold text-gray-800')], [heading]),
+      h.p([h.Class('text-gray-600')], ['この画面は準備中です。']),
+      h.a(
+        [h.Href(topRouter()), h.Class('text-gray-700 underline')],
+        ['一覧に戻る'],
+      ),
+    ],
+  )
 
-const pingResultView = (ping: Ping, h: HtmlBuilder<Message>): Html =>
-  Ping.match(ping, {
-    PingIdle: () => h.empty,
-    PingLoading: () => h.empty,
-    PingSuccess: ({ message, at }) =>
-      h.p([h.Class('text-gray-800')], [`${message} (${at})`]),
-    PingFailure: ({ code, message }) =>
-      h.p([h.Class('text-red-700')], [`エラー: ${code} ${message}`]),
+const pageView = (model: Model, h: HtmlBuilder<Message>): Html =>
+  AppRoute.match(model.route, {
+    Top: () =>
+      h.submodel({
+        slotId: 'top',
+        model: model.topPage,
+        view: Top.view,
+        toParentMessage: message => Message.GotTopMessage({ message }),
+      }),
+    NewCharacter: () => placeholderView('キャラクターの新規作成', h),
+    Character: () => placeholderView('キャラクターの詳細', h),
+    EditCharacter: () => placeholderView('キャラクターの編集', h),
+    NotFound: () =>
+      h.div(
+        [h.Class('space-y-4')],
+        [
+          h.h2(
+            [h.Class('text-2xl font-bold text-gray-800')],
+            ['ページが見つかりません'],
+          ),
+          h.a(
+            [h.Href(topRouter()), h.Class('text-gray-700 underline')],
+            ['一覧に戻る'],
+          ),
+        ],
+      ),
   })
 
-// STYLE
-
-const buttonStyle =
-  'bg-black text-white hover:bg-gray-700 px-4 py-2 transition disabled:opacity-50'
+export const view = (model: Model, h: HtmlBuilder<Message>): Document => ({
+  title: TITLE,
+  body: h.div(
+    [h.Class('min-h-screen bg-white')],
+    [
+      h.header(
+        [h.Class('border-b border-gray-200 px-4 py-4')],
+        [
+          h.h1(
+            [h.Class('max-w-4xl mx-auto text-2xl font-bold text-gray-800')],
+            [h.a([h.Href(topRouter())], [TITLE])],
+          ),
+        ],
+      ),
+      h.main([h.Class('max-w-4xl mx-auto px-4 py-6')], [pageView(model, h)]),
+    ],
+  ),
+})

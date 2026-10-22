@@ -1,52 +1,55 @@
-import { Command, click, expect, given, role, scene, text } from 'foldkit/scene'
+import { expect, given, role, scene, text } from 'foldkit/scene'
 import { describe, test } from 'vitest'
 
-import { CallPing } from './command'
-import { Message } from './message'
-import { Ping } from './model'
+import { type Model } from './model'
+import { Top } from './page'
+import { AppRoute } from './route'
 import { update } from './update'
 import { view } from './view'
 
+const on = (route: AppRoute): Model => ({ route, topPage: Top.notLoaded })
+
 describe('view', () => {
-  test('idle shows an enabled Ping button and no result', () => {
+  test('the site title links to the top page', () => {
     scene(
       { update, view },
-      given({ ping: Ping.PingIdle() }),
-      expect(role('button', { name: 'Ping' })).not.toBeDisabled(),
-      expect(text('pong', { exact: false })).not.toExist(),
-      expect(text('エラー:', { exact: false })).not.toExist(),
+      given(on(AppRoute.Character({ id: 'a' }))),
+      expect(
+        role('link', { name: 'りゅうたま キャラクターシート' }),
+      ).toHaveAttr('href', '/'),
     )
   })
 
-  test('clicking Ping shows the loading state, then the result', () => {
-    scene(
-      { update, view },
-      given({ ping: Ping.PingIdle() }),
-      click(role('button', { name: 'Ping' })),
-      expect(role('button', { name: '送信中…' })).toBeDisabled(),
-      Command.resolve(
-        CallPing,
-        Message.SucceededPing({
-          message: 'pong',
-          at: '2026-10-20T00:00:00.000Z',
-        }),
-      ),
-      expect(text('pong (2026-10-20T00:00:00.000Z)')).toExist(),
-      expect(role('button', { name: 'Ping' })).not.toBeDisabled(),
-    )
-  })
-
-  test('failure shows the code and message', () => {
+  test('the top page shows the character list', () => {
     scene(
       { update, view },
       given({
-        ping: Ping.PingFailure({
-          code: 'functions/unavailable',
-          message: 'down',
-        }),
+        route: AppRoute.Top(),
+        topPage: {
+          searchInput: '',
+          characters: Top.Characters.Loaded({ characters: [] }),
+        },
       }),
-      expect(text('エラー: functions/unavailable down')).toExist(),
-      expect(role('button', { name: 'Ping' })).not.toBeDisabled(),
+      expect(role('link', { name: '新規作成' })).toExist(),
+      expect(text('まだキャラクターがいません')).toExist(),
+    )
+  })
+
+  test('pages that are not built yet say so', () => {
+    scene(
+      { update, view },
+      given(on(AppRoute.NewCharacter())),
+      expect(role('heading', { name: 'キャラクターの新規作成' })).toExist(),
+      expect(text('この画面は準備中です。')).toExist(),
+    )
+  })
+
+  test('an unknown url shows not found', () => {
+    scene(
+      { update, view },
+      given(on(AppRoute.NotFound({ path: '/nope' }))),
+      expect(role('heading', { name: 'ページが見つかりません' })).toExist(),
+      expect(role('link', { name: '一覧に戻る' })).toHaveAttr('href', '/'),
     )
   })
 })
