@@ -22,6 +22,7 @@ const url = (path: string): Url =>
 const onCharacter: Model = {
   route: AppRoute.Character({ id: 'a' }),
   topPage: {
+    ...Top.notLoaded,
     searchInput: 'ル',
     characters: Top.Characters.Loaded({ characters: [] }),
   },
@@ -93,7 +94,7 @@ describe('update', () => {
       model(model => {
         expect(model.route).toEqual(AppRoute.Top())
         expect(model.topPage).toEqual({
-          searchInput: 'ル',
+          ...onCharacter.topPage,
           characters: Top.Characters.Loading(),
         })
       }),

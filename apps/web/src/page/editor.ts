@@ -23,9 +23,9 @@ import {
 
 import { Draft, emptyDraft, fromSheet, toSheet } from '../draft'
 import {
+  callErrorMessage,
   createCharacter,
   fetchCharacter,
-  saveErrorMessage,
   updateCharacter,
 } from '../firebase/characters'
 import type { FirebaseCallError, FirebaseService } from '../firebase/service'
@@ -208,7 +208,7 @@ export const FetchCharacterToEdit = Command.define('FetchCharacterToEdit', {
 const toSaveMessage = Effect.match({
   onSuccess: ({ id }: { readonly id: string }) => Message.SucceededSave({ id }),
   onFailure: (error: FirebaseCallError) =>
-    Message.FailedSave({ message: saveErrorMessage(error) }),
+    Message.FailedSave({ message: callErrorMessage('保存', error) }),
 })
 
 export const CreateCharacter = Command.define('CreateCharacter', {

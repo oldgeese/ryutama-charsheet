@@ -33,7 +33,7 @@ describe('view', () => {
       given({
         route: AppRoute.Top(),
         topPage: {
-          searchInput: '',
+          ...Top.notLoaded,
           characters: Top.Characters.Loaded({ characters: [] }),
         },
         characterPage: CharacterPage.notLoaded,
