@@ -4,7 +4,7 @@ import { describe, test } from 'vitest'
 import { emptySheet } from '@ryutama/character'
 
 import { type Model } from './model'
-import { CharacterPage, Top } from './page'
+import { CharacterPage, EditorPage, Top } from './page'
 import { AppRoute } from './route'
 import { update } from './update'
 import { view } from './view'
@@ -13,6 +13,7 @@ const on = (route: AppRoute): Model => ({
   route,
   topPage: Top.notLoaded,
   characterPage: CharacterPage.notLoaded,
+  editorPage: EditorPage.notLoaded,
 })
 
 describe('view', () => {
@@ -36,6 +37,7 @@ describe('view', () => {
           characters: Top.Characters.Loaded({ characters: [] }),
         },
         characterPage: CharacterPage.notLoaded,
+        editorPage: EditorPage.notLoaded,
       }),
       expect(role('link', { name: '新規作成' })).toExist(),
       expect(text('まだキャラクターがいません')).toExist(),
@@ -56,12 +58,32 @@ describe('view', () => {
     )
   })
 
-  test('pages that are not built yet say so', () => {
+  test('the new character page shows the form', () => {
     scene(
       { update, view },
-      given(on(AppRoute.NewCharacter())),
+      given({
+        ...on(AppRoute.NewCharacter()),
+        editorPage: EditorPage.initNew().model,
+      }),
       expect(role('heading', { name: 'キャラクターの新規作成' })).toExist(),
-      expect(text('この画面は準備中です。')).toExist(),
+    )
+  })
+
+  test('the edit page shows the form', () => {
+    scene(
+      { update, view },
+      given({
+        ...on(AppRoute.EditCharacter({ id: 'a' })),
+        editorPage: EditorPage.update(
+          EditorPage.load('a').model,
+          EditorPage.Message.SucceededFetchCharacter({
+            id: 'a',
+            sheet: { ...emptySheet, characterName: 'ルル' },
+          }),
+        ).model,
+      }),
+      expect(role('heading', { name: 'キャラクターの編集' })).toExist(),
+      expect(role('textbox', { name: 'キャラクター名' })).toHaveValue('ルル'),
     )
   })
 

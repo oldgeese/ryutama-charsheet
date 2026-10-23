@@ -2,23 +2,18 @@ import { type Document, type Html, type HtmlBuilder } from 'foldkit/html'
 
 import { Message } from './message'
 import type { Model } from './model'
-import { CharacterPage, Top } from './page'
+import { CharacterPage, EditorPage, Top } from './page'
 import { AppRoute, topRouter } from './route'
 
 const TITLE = 'りゅうたま キャラクターシート'
 
-const placeholderView = (heading: string, h: HtmlBuilder<Message>): Html =>
-  h.div(
-    [h.Class('space-y-4')],
-    [
-      h.h2([h.Class('text-2xl font-bold text-gray-800')], [heading]),
-      h.p([h.Class('text-gray-600')], ['この画面は準備中です。']),
-      h.a(
-        [h.Href(topRouter()), h.Class('text-gray-700 underline')],
-        ['一覧に戻る'],
-      ),
-    ],
-  )
+const editorView = (model: Model, h: HtmlBuilder<Message>): Html =>
+  h.submodel({
+    slotId: 'editor',
+    model: model.editorPage,
+    view: EditorPage.view,
+    toParentMessage: message => Message.GotEditorPageMessage({ message }),
+  })
 
 const pageView = (model: Model, h: HtmlBuilder<Message>): Html =>
   AppRoute.match(model.route, {
@@ -29,7 +24,7 @@ const pageView = (model: Model, h: HtmlBuilder<Message>): Html =>
         view: Top.view,
         toParentMessage: message => Message.GotTopMessage({ message }),
       }),
-    NewCharacter: () => placeholderView('キャラクターの新規作成', h),
+    NewCharacter: () => editorView(model, h),
     Character: () =>
       h.submodel({
         slotId: 'character',
@@ -38,7 +33,7 @@ const pageView = (model: Model, h: HtmlBuilder<Message>): Html =>
         toParentMessage: message =>
           Message.GotCharacterPageMessage({ message }),
       }),
-    EditCharacter: () => placeholderView('キャラクターの編集', h),
+    EditCharacter: () => editorView(model, h),
     NotFound: () =>
       h.div(
         [h.Class('space-y-4')],

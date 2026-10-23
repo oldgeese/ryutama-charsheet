@@ -9,7 +9,7 @@ import { NavigateInternal } from './command'
 import { init } from './main'
 import { Message } from './message'
 import { type Model } from './model'
-import { CharacterPage, Top } from './page'
+import { CharacterPage, EditorPage, Top } from './page'
 import { AppRoute } from './route'
 import { update } from './update'
 
@@ -26,6 +26,7 @@ const onCharacter: Model = {
     characters: Top.Characters.Loaded({ characters: [] }),
   },
   characterPage: CharacterPage.Sheet.Loaded({ id: 'a', sheet: emptySheet }),
+  editorPage: EditorPage.notLoaded,
 }
 
 describe('init', () => {
@@ -46,12 +47,21 @@ describe('init', () => {
     expect(init_.commands).toHaveLength(1)
   })
 
-  test('loads nothing on pages that are not built yet', () => {
+  test('starts an empty sheet on the new character page', () => {
+    const init_ = init(url('/characters/new'))
+    expect(init_.model.route).toEqual(AppRoute.NewCharacter())
+    expect(init_.model.editorPage).toEqual(EditorPage.initNew().model)
+    expect(init_.commands ?? []).toHaveLength(0)
+  })
+
+  test('loads the character on its edit page', () => {
     const init_ = init(url('/characters/a/edit'))
     expect(init_.model.route).toEqual(AppRoute.EditCharacter({ id: 'a' }))
-    expect(init_.model.topPage.characters).toEqual(Top.Characters.NotLoaded())
     expect(init_.model.characterPage).toEqual(CharacterPage.Sheet.NotLoaded())
-    expect(init_.commands).toBeUndefined()
+    expect(init_.model.editorPage).toEqual(
+      EditorPage.Editor.Loading({ id: 'a' }),
+    )
+    expect(init_.commands).toHaveLength(1)
   })
 })
 
@@ -119,14 +129,45 @@ describe('update', () => {
     )
   })
 
-  test('moving to another page only changes the route', () => {
+  test('moving to an edit page loads that character', () => {
     story(
       update,
       given(onCharacter),
       message(Message.ChangedUrl({ url: url('/characters/a/edit') })),
-      Command.expectNone(),
       model(model => {
         expect(model.route).toEqual(AppRoute.EditCharacter({ id: 'a' }))
+        expect(model.characterPage).toEqual(onCharacter.characterPage)
+        expect(model.editorPage).toEqual(EditorPage.Editor.Loading({ id: 'a' }))
+      }),
+      Command.expectExact(EditorPage.FetchCharacterToEdit({ id: 'a' })),
+      Command.resolve(
+        EditorPage.FetchCharacterToEdit({ id: 'a' }),
+        EditorPage.Message.MissingCharacter({ id: 'a' }),
+      ),
+    )
+  })
+
+  test('moving to the new character page starts an empty sheet', () => {
+    story(
+      update,
+      given(onCharacter),
+      message(Message.ChangedUrl({ url: url('/characters/new') })),
+      Command.expectNone(),
+      model(model => {
+        expect(model.route).toEqual(AppRoute.NewCharacter())
+        expect(model.editorPage).toEqual(EditorPage.initNew().model)
+      }),
+    )
+  })
+
+  test('moving to an unknown page only changes the route', () => {
+    story(
+      update,
+      given(onCharacter),
+      message(Message.ChangedUrl({ url: url('/nope') })),
+      Command.expectNone(),
+      model(model => {
+        expect(model.route).toEqual(AppRoute.NotFound({ path: '/nope' }))
         expect(model.topPage).toEqual(onCharacter.topPage)
         expect(model.characterPage).toEqual(onCharacter.characterPage)
       }),
