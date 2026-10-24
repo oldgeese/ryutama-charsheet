@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "demo-ryutama"
+    "default": "demo-ryutama",
+    "dev": "ryutama-charsheet-dev",
+    "prod": "ryutama-charsheet"
   }
 }

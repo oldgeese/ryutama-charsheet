@@ -102,7 +102,7 @@ UI は https://dnd35-character-database.oldgeese.net/ を参考にする。
 - どちらも Blaze プランにする（Functions を使うため）
 - プロジェクト ID は、プロジェクトを作る Issue で決めて `.firebaserc` に書く
 - Web の Firebase 設定は、環境ごとにビルド時の env（`VITE_FIREBASE_*`）で渡す
-- デプロイには GitHub Actions を使う。認証情報は GitHub の Environment（`dev`、`prod`）ごとに Secret として登録する
+- デプロイには GitHub Actions を使う。GCP へは Workload Identity Federation で入り、その識別子は GitHub の Environment（`dev`、`prod`）ごとに Variables として登録する（#11 で鍵ファイルの Secret から変えた）
 
 ## ⑤ 後続 Issue の分割
 
