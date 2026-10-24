@@ -13,7 +13,8 @@ import { firestoreStore } from './store.js'
 initializeApp()
 const store = firestoreStore(getFirestore())
 
-const options = { region: 'asia-northeast1' }
+// NOTE: サイトにはログインがなく、パスワードの照合は関数の中で行うので、誰でも呼べるようにする
+const options = { region: 'asia-northeast1', invoker: 'public' } as const
 
 export const ping = onCall(options, () => makePing(new Date()))
 

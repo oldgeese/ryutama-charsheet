@@ -10,10 +10,10 @@
   },
   "functions": [
     {
-      "source": "functions",
+      "source": "functions/lib",
       "codebase": "default",
       "runtime": "nodejs24",
-      "ignore": ["node_modules", "src", "*.log", "tsconfig*.json", "vitest.config.ts"],
+      "ignore": ["node_modules", "*.log"],
       "predeploy": ["pnpm --filter functions build"]
     }
   ],
