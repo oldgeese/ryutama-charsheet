@@ -1,15 +1,19 @@
-import { Array, Effect, Schema } from 'effect'
-import { Command, Submodel, type Update } from 'foldkit'
-import { type Html, type HtmlBuilder } from 'foldkit/html'
+import { Array, Effect, Option, Schema, String } from 'effect'
+import { Command, Submodel, Update } from 'foldkit'
+import { type ChildAttribute, type Html, type HtmlBuilder } from 'foldkit/html'
 import { defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 import { modifyFields } from 'foldkit/struct'
 
-import { Button, Input } from '@foldkit/ui'
+import { Button, Dialog, Input } from '@foldkit/ui'
 
 import { ListedCharacter, searchCharacters } from '../character'
-import { fetchListedCharacters } from '../firebase/characters'
-import type { FirebaseService } from '../firebase/service'
+import {
+  callErrorMessage,
+  duplicateCharacter,
+  fetchListedCharacters,
+} from '../firebase/characters'
+import type { FirebaseCallError, FirebaseService } from '../firebase/service'
 import {
   characterRouter,
   editCharacterRouter,
@@ -26,9 +30,26 @@ export const Characters = defineTaggedUnion({
 })
 export type Characters = typeof Characters.Type
 
+export const Submission = defineTaggedUnion({
+  Idle: {},
+  Duplicating: {},
+  Failed: { message: Schema.String },
+})
+export type Submission = typeof Submission.Type
+
+// NOTE: ダイアログはページに 1 つだけ置き、開くたびに複製元を入れ替える
+export const Duplication = Schema.Struct({
+  source: Schema.Option(ListedCharacter),
+  password: Schema.String,
+  submission: Submission,
+  dialog: Dialog.Model,
+})
+export type Duplication = typeof Duplication.Type
+
 export const Model = Schema.Struct({
   searchInput: Schema.String,
   characters: Characters,
+  duplication: Duplication,
 })
 export type Model = typeof Model.Type
 
@@ -39,6 +60,12 @@ export const Message = defineMessageUnion({
   ClickedRetry: {},
   SucceededFetchCharacters: { characters: Schema.Array(ListedCharacter) },
   FailedFetchCharacters: { message: Schema.String },
+  ClickedDuplicate: { character: ListedCharacter },
+  UpdatedDuplicatePassword: { value: Schema.String },
+  SubmittedDuplicate: {},
+  SucceededDuplicate: { id: Schema.String },
+  FailedDuplicate: { message: Schema.String },
+  GotDuplicateDialogMessage: { message: Dialog.Message },
 })
 export type Message = typeof Message.Type
 
@@ -54,13 +81,36 @@ export const FetchCharacters = Command.define('FetchCharacters', {
   ),
 })
 
+export const DuplicateCharacter = Command.define('DuplicateCharacter', {
+  args: { id: Schema.String, password: Schema.String },
+  messages: [Message.SucceededDuplicate, Message.FailedDuplicate],
+  execute: request =>
+    duplicateCharacter(request).pipe(
+      Effect.match({
+        onSuccess: ({ id }) => Message.SucceededDuplicate({ id }),
+        onFailure: (error: FirebaseCallError) =>
+          Message.FailedDuplicate({
+            message: callErrorMessage('複製', error),
+          }),
+      }),
+    ),
+})
+
 // INIT
 
 export type UpdateReturn = Update.Return<Model, Message, FirebaseService>
 
+const DUPLICATE_DIALOG_ID = 'duplicate-dialog'
+
 export const notLoaded: Model = {
   searchInput: '',
   characters: Characters.NotLoaded(),
+  duplication: {
+    source: Option.none(),
+    password: '',
+    submission: Submission.Idle(),
+    dialog: Dialog.init({ id: DUPLICATE_DIALOG_ID }),
+  },
 }
 
 export const reload = (model: Model): UpdateReturn => ({
@@ -71,6 +121,98 @@ export const reload = (model: Model): UpdateReturn => ({
 export const init = (): UpdateReturn => reload(notLoaded)
 
 // UPDATE
+
+const toDuplicateDialogMessage = (message: Dialog.Message) =>
+  Message.GotDuplicateDialogMessage({ message })
+
+const duplicateDialogChild = {
+  read: (model: Model) => Option.some(model.duplication.dialog),
+  write: (model: Model, dialog: Dialog.Model) =>
+    modifyFields(model, {
+      duplication: duplication =>
+        modifyFields(duplication, { dialog: () => dialog }),
+    }),
+  toParentMessage: toDuplicateDialogMessage,
+  foldOutMessage: Dialog.OutMessage.match({
+    Opened: () => (model: Model) => ({ model }),
+    Closed: () => (model: Model) => ({ model }),
+  }),
+}
+
+const foldDuplicateDialog = Update.foldChild({
+  update: Dialog.update,
+  ...duplicateDialogChild,
+})
+
+const openDuplicateDialog = Update.foldChildStep({
+  update: Dialog.open,
+  ...duplicateDialogChild,
+})
+
+const closeDuplicateDialog = Update.foldChildStep({
+  update: Dialog.close,
+  ...duplicateDialogChild,
+})
+
+const modifyDuplication = (
+  model: Model,
+  fields: Partial<{
+    [K in keyof Duplication]: (value: Duplication[K]) => Duplication[K]
+  }>,
+): Model =>
+  modifyFields(model, {
+    duplication: duplication => modifyFields(duplication, fields),
+  })
+
+const isDuplicating = (model: Model): boolean =>
+  model.duplication.submission._tag === 'Duplicating'
+
+const failDuplicate = (model: Model, message: string): UpdateReturn => ({
+  model: modifyDuplication(model, {
+    submission: () => Submission.Failed({ message }),
+  }),
+})
+
+const startDuplicate = (
+  model: Model,
+  character: ListedCharacter,
+): UpdateReturn =>
+  Update.combine(
+    modifyDuplication(model, {
+      source: () => Option.some(character),
+      password: () => '',
+      submission: () => Submission.Idle(),
+    }),
+    [openDuplicateDialog],
+  )
+
+// 送信するのは、複製元があってパスワードが空でないときだけ
+const submitDuplicate = (model: Model): UpdateReturn => {
+  const { source, password } = model.duplication
+  if (isDuplicating(model) || Option.isNone(source)) {
+    return { model }
+  }
+  if (String.isEmpty(password)) {
+    return failDuplicate(model, 'パスワードを入力してください')
+  }
+  return {
+    model: modifyDuplication(model, {
+      submission: () => Submission.Duplicating(),
+    }),
+    commands: [DuplicateCharacter({ id: source.value.id, password })],
+  }
+}
+
+const finishDuplicate = (model: Model): UpdateReturn => {
+  const closed = closeDuplicateDialog(
+    modifyDuplication(model, { submission: () => Submission.Idle() }),
+  )
+  const reloaded = reload(closed.model)
+  return {
+    model: reloaded.model,
+    commands: [...(closed.commands ?? []), ...(reloaded.commands ?? [])],
+  }
+}
 
 export const update = (model: Model, message: Message) =>
   Message.match<UpdateReturn>(message, {
@@ -88,6 +230,18 @@ export const update = (model: Model, message: Message) =>
         characters: () => Characters.Failed({ message }),
       }),
     }),
+
+    ClickedDuplicate: ({ character }) => startDuplicate(model, character),
+    UpdatedDuplicatePassword: ({ value }) => ({
+      model: modifyDuplication(model, { password: () => value }),
+    }),
+    SubmittedDuplicate: () => submitDuplicate(model),
+    SucceededDuplicate: () =>
+      isDuplicating(model) ? finishDuplicate(model) : { model },
+    FailedDuplicate: ({ message }) =>
+      isDuplicating(model) ? failDuplicate(model, message) : { model },
+    GotDuplicateDialogMessage: ({ message }) =>
+      foldDuplicateDialog(model, message),
   })
 
 // VIEW
@@ -134,6 +288,23 @@ const characterRowView = (
           ),
         ],
         ['編集'],
+      ),
+      Button.view(
+        {
+          onClick: Message.ClickedDuplicate({ character }),
+          toView: ({ button }) =>
+            h.button(
+              [
+                ...button,
+                h.AriaLabel(`${character.characterName}を複製`),
+                h.Class(
+                  'relative z-10 px-3 py-1 border border-gray-300 rounded hover:bg-white',
+                ),
+              ],
+              ['複製'],
+            ),
+        },
+        h,
       ),
     ],
   )
@@ -187,6 +358,145 @@ const charactersView = (model: Model, h: HtmlBuilder<Message>): Html =>
       characterListView(characters, model.searchInput, h),
   })
 
+const passwordInputView = (
+  password: string,
+  h: HtmlBuilder<Message>,
+  extra: ReadonlyArray<ChildAttribute>,
+): Html =>
+  Input.view(
+    {
+      id: 'duplicate-password',
+      type: 'password',
+      value: password,
+      onInput: value => Message.UpdatedDuplicatePassword({ value }),
+      toView: attributes =>
+        h.div(
+          [],
+          [
+            h.label(
+              [...attributes.label, h.Class('block text-sm text-gray-600')],
+              ['パスワード'],
+            ),
+            h.input([
+              ...attributes.input,
+              ...extra,
+              h.Autocomplete('current-password'),
+              h.Class(
+                'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500',
+              ),
+            ]),
+          ],
+        ),
+    },
+    h,
+  )
+
+const duplicateErrorView = (
+  submission: Submission,
+  h: HtmlBuilder<Message>,
+): Html =>
+  submission._tag === 'Failed'
+    ? h.p([h.Role('alert'), h.Class('text-red-700')], [submission.message])
+    : h.empty
+
+const duplicateButtonView = (
+  submission: Submission,
+  h: HtmlBuilder<Message>,
+): Html =>
+  Button.view(
+    {
+      type: 'submit',
+      isDisabled: submission._tag === 'Duplicating',
+      toView: ({ button }) =>
+        h.button(
+          [...button, h.Class(primaryButtonStyle)],
+          [submission._tag === 'Duplicating' ? '複製中…' : '複製'],
+        ),
+    },
+    h,
+  )
+
+const duplicateDialogView = (
+  duplication: Duplication,
+  h: HtmlBuilder<Message>,
+): Html =>
+  h.submodel({
+    slotId: DUPLICATE_DIALOG_ID,
+    model: duplication.dialog,
+    view: Dialog.view,
+    viewInputs: {
+      toView: ({
+        dialog,
+        backdrop,
+        panel,
+        title,
+        initialFocus,
+        closeButton,
+        isVisible,
+      }) =>
+        h.dialog(
+          [...dialog, h.Class('bg-transparent')],
+          isVisible
+            ? [
+                h.div([...backdrop, h.Class('fixed inset-0 bg-black/40')]),
+                h.div(
+                  [
+                    ...panel,
+                    h.Class(
+                      'fixed inset-x-4 top-1/3 mx-auto max-w-sm rounded-lg bg-white p-6 shadow-lg',
+                    ),
+                  ],
+                  [
+                    h.form(
+                      [
+                        h.OnSubmit(Message.SubmittedDuplicate()),
+                        h.Class('space-y-4'),
+                      ],
+                      [
+                        h.h2(
+                          [
+                            ...title,
+                            h.Class('text-lg font-bold text-gray-800'),
+                          ],
+                          [
+                            Option.match(duplication.source, {
+                              onNone: () => '複製',
+                              onSome: ({ characterName }) =>
+                                `「${characterName}」を複製`,
+                            }),
+                          ],
+                        ),
+                        h.p(
+                          [h.Class('text-sm text-gray-600')],
+                          ['複製先のパスワードは複製元と同じになります。'],
+                        ),
+                        passwordInputView(
+                          duplication.password,
+                          h,
+                          initialFocus,
+                        ),
+                        duplicateErrorView(duplication.submission, h),
+                        h.div(
+                          [h.Class('flex justify-end gap-2')],
+                          [
+                            h.button(
+                              [...closeButton, h.Class(secondaryButtonStyle)],
+                              ['キャンセル'],
+                            ),
+                            duplicateButtonView(duplication.submission, h),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ]
+            : [],
+        ),
+    },
+    toParentMessage: toDuplicateDialogMessage,
+  })
+
 export const view = Submodel.defineView<Model, Message>((model, h): Html =>
   h.div(
     [h.Class('space-y-6')],
@@ -233,6 +543,7 @@ export const view = Submodel.defineView<Model, Message>((model, h): Html =>
         ],
       ),
       charactersView(model, h),
+      duplicateDialogView(model.duplication, h),
     ],
   ),
 )
@@ -240,7 +551,7 @@ export const view = Submodel.defineView<Model, Message>((model, h): Html =>
 // STYLE
 
 const primaryButtonStyle =
-  'bg-black text-white hover:bg-gray-700 px-4 py-2 rounded transition'
+  'bg-black text-white hover:bg-gray-700 disabled:opacity-50 px-4 py-2 rounded transition'
 
 const secondaryButtonStyle =
   'border border-gray-300 hover:bg-gray-100 px-4 py-2 rounded transition'

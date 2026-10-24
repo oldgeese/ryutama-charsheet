@@ -14,6 +14,7 @@ import {
   CharacterIdResponse,
   CharacterSheet,
   type CreateCharacterRequest,
+  type DuplicateCharacterRequest,
   type UpdateCharacterRequest,
 } from '@ryutama/character'
 
@@ -87,14 +88,23 @@ export const updateCharacter = (request: UpdateCharacterRequest) =>
     return yield* call('updateCharacter', request, CharacterIdResponse)
   })
 
+export const duplicateCharacter = (request: DuplicateCharacterRequest) =>
+  Effect.gen(function* () {
+    const { call } = yield* FirebaseService
+    return yield* call('duplicateCharacter', request, CharacterIdResponse)
+  })
+
 // NOTE: Functions のメッセージには環境によって「 [403]」のような後ろ書きが付くので、決まったエラーは文言をこちらで持つ
-export const saveErrorMessage = (error: FirebaseCallError): string => {
+export const callErrorMessage = (
+  action: '保存' | '複製',
+  error: FirebaseCallError,
+): string => {
   switch (error.code) {
     case 'functions/permission-denied':
       return 'パスワードが違います'
     case 'functions/not-found':
       return 'キャラクターが見つかりません'
     default:
-      return `保存できませんでした: ${error.message}`
+      return `${action}できませんでした: ${error.message}`
   }
 }
