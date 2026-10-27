@@ -19,6 +19,7 @@ import {
   editCharacterRouter,
   newCharacterRouter,
 } from '../route'
+import { isDevSite } from '../title'
 
 // MODEL
 
@@ -497,10 +498,26 @@ const duplicateDialogView = (
     toParentMessage: toDuplicateDialogMessage,
   })
 
+const IS_DEV_SITE = isDevSite(import.meta.env)
+
+const devSiteNoticeView = (h: HtmlBuilder<Message>): Html =>
+  IS_DEV_SITE
+    ? h.p(
+        [
+          h.Role('note'),
+          h.Class(
+            'border border-yellow-300 bg-yellow-50 text-yellow-900 rounded-lg px-4 py-2',
+          ),
+        ],
+        ['このサイトは開発用であり、予告なくデータが消えることがあります。'],
+      )
+    : h.empty
+
 export const view = Submodel.defineView<Model, Message>((model, h): Html =>
   h.div(
     [h.Class('space-y-6')],
     [
+      devSiteNoticeView(h),
       h.div(
         [h.Class('flex flex-wrap items-center gap-4')],
         [
