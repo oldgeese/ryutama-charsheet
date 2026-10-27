@@ -4,8 +4,9 @@ import { Message } from './message'
 import type { Model } from './model'
 import { CharacterPage, EditorPage, Top } from './page'
 import { AppRoute, topRouter } from './route'
+import { siteTitle } from './title'
 
-const TITLE = 'りゅうたま キャラクターシート'
+const TITLE = siteTitle(import.meta.env)
 
 const editorView = (model: Model, h: HtmlBuilder<Message>): Html =>
   h.submodel({
