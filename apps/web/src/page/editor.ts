@@ -738,17 +738,17 @@ const checkboxGroupView = <A extends string>(
                       [
                         ...attributes.checkbox,
                         h.Class(
-                          'size-4 flex items-center justify-center border border-gray-400 rounded-sm data-[disabled]:opacity-40',
+                          'group size-4 flex items-center justify-center border border-gray-400 rounded-sm text-black data-[disabled]:opacity-40',
                         ),
                       ],
-                      isChecked
-                        ? [
-                            h.span([
-                              h.Class('icon-[lucide--check] text-xs'),
-                              h.AriaHidden(true),
-                            ]),
-                          ]
-                        : [],
+                      [
+                        h.span([
+                          h.Class(
+                            'icon-[lucide--check] text-xs invisible group-data-[checked]:visible',
+                          ),
+                          h.AriaHidden(true),
+                        ]),
+                      ],
                     ),
                     h.label(
                       [
