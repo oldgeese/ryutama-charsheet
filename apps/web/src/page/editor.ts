@@ -734,12 +734,22 @@ const checkboxGroupView = <A extends string>(
                 h.div(
                   [h.Class('flex items-center gap-1')],
                   [
-                    h.button([
-                      ...attributes.checkbox,
-                      h.Class(
-                        'size-4 border border-gray-400 rounded-sm data-[checked]:bg-black data-[disabled]:opacity-40',
-                      ),
-                    ]),
+                    h.button(
+                      [
+                        ...attributes.checkbox,
+                        h.Class(
+                          'group size-4 flex items-center justify-center border border-gray-400 rounded-sm text-black data-[disabled]:opacity-40',
+                        ),
+                      ],
+                      [
+                        h.span([
+                          h.Class(
+                            'icon-[lucide--check] text-xs invisible group-data-[checked]:visible',
+                          ),
+                          h.AriaHidden(true),
+                        ]),
+                      ],
+                    ),
                     h.label(
                       [
                         ...attributes.label,
