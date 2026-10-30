@@ -29,10 +29,28 @@ describe('CharacterSheet', () => {
     ).toBe(false)
   })
 
-  test('rejects the same class twice', () => {
+  test('accepts the same class twice', () => {
     expect(isSheet({ ...emptySheet, classes: ['ハンター', 'ハンター'] })).toBe(
-      false,
+      true,
     )
+  })
+
+  test('accepts the same type twice', () => {
+    expect(
+      isSheet({
+        ...emptySheet,
+        types: ['マジックタイプ', 'マジックタイプ'],
+      }),
+    ).toBe(true)
+  })
+
+  test('rejects more than two types', () => {
+    expect(
+      isSheet({
+        ...emptySheet,
+        types: ['マジックタイプ', 'マジックタイプ', 'マジックタイプ'],
+      }),
+    ).toBe(false)
   })
 
   test('rejects a class that is not in the rulebook', () => {

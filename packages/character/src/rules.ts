@@ -66,6 +66,6 @@ export type StatusEffect = typeof StatusEffect.Type
 export const MIN_LEVEL = 1
 export const MAX_LEVEL = 10
 
-// レベル 5 でクラス、レベル 6 でタイプを追加で取得する
+// レベル 5 でクラス、レベル 6 でタイプを追加で取得する。すでに持っているものを重ねて取得してもよい
 export const MAX_CLASSES = 2
 export const MAX_TYPES = 2

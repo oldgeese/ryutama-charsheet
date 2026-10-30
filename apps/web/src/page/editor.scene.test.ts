@@ -1,6 +1,7 @@
 import {
   Command,
   Mount,
+  change,
   click,
   expect,
   given,
@@ -33,6 +34,7 @@ const lulu: CharacterSheet = {
   ...emptySheet,
   characterName: 'ルル',
   classes: ['ミンストレル', 'ヒーラー'],
+  types: ['マジックタイプ'],
   weapons: [
     {
       name: '短剣',
@@ -71,12 +73,35 @@ describe('editor page view', () => {
       expect(role('heading', { name: 'キャラクターの編集' })).toExist(),
       expect(role('textbox', { name: 'キャラクター名' })).toHaveValue('ルル'),
       expect(role('textbox', { name: '武器 1 の名前' })).toHaveValue('短剣'),
-      expect(role('checkbox', { name: 'ヒーラー' })).toBeChecked(),
-      expect(role('checkbox', { name: 'ハンター' })).toBeDisabled(),
+      expect(role('combobox', { name: 'クラス（1つ目）' })).toHaveValue(
+        'ミンストレル',
+      ),
+      expect(role('combobox', { name: 'クラス（2つ目）' })).toHaveValue(
+        'ヒーラー',
+      ),
+      expect(role('combobox', { name: 'タイプ（1つ目）' })).toHaveValue(
+        'マジックタイプ',
+      ),
+      expect(role('combobox', { name: 'タイプ（2つ目）' })).toHaveValue(''),
       expect(text('パスワード')).not.toExist(),
       expect(role('link', { name: 'キャラクターに戻る' })).toHaveAttr(
         'href',
         '/characters/a',
+      ),
+    )
+  })
+
+  test('the same class can be chosen in both selects', () => {
+    scene(
+      { update, view },
+      given(initNew().model),
+      change(role('combobox', { name: 'クラス（1つ目）' }), 'ハンター'),
+      change(role('combobox', { name: 'クラス（2つ目）' }), 'ハンター'),
+      expect(role('combobox', { name: 'クラス（1つ目）' })).toHaveValue(
+        'ハンター',
+      ),
+      expect(role('combobox', { name: 'クラス（2つ目）' })).toHaveValue(
+        'ハンター',
       ),
     )
   })
