@@ -6,7 +6,7 @@ import { pushUrl } from 'foldkit/navigation'
 import { defineTaggedUnion } from 'foldkit/schema'
 import { modifyFields } from 'foldkit/struct'
 
-import { Button, Checkbox, Dialog, Input, Select, Textarea } from '@foldkit/ui'
+import { Button, Dialog, Input, Select, Textarea } from '@foldkit/ui'
 import {
   AbilityDie,
   CharacterClass,
@@ -147,8 +147,8 @@ export const Message = defineMessageUnion({
   SelectedLevel: { level: Level },
   SelectedAbility: { ability: Ability, die: AbilityDie },
   UpdatedPoints: { pool: Pool, part: PoolPart, value: Schema.String },
-  ToggledClass: { name: CharacterClass, isChecked: Schema.Boolean },
-  ToggledType: { name: CharacterType, isChecked: Schema.Boolean },
+  SelectedClass: { slot: Schema.Int, maybeName: Schema.Option(CharacterClass) },
+  SelectedType: { slot: Schema.Int, maybeName: Schema.Option(CharacterType) },
   AddedRow: { table: Table },
   RemovedRow: { table: Table, index: Schema.Int },
   UpdatedClassAbility: {
@@ -296,15 +296,17 @@ const modifyAt = <A>(
 ): ReadonlyArray<A> =>
   Option.getOrElse(Array.modify(rows, index, f), () => rows)
 
-const toggleName = <A>(
+const selectName = <A>(
   names: ReadonlyArray<A>,
-  name: A,
-  isChecked: boolean,
+  slot: number,
+  maybeName: Option.Option<A>,
   max: number,
-): ReadonlyArray<A> => {
-  const others = Array.filter(names, other => other !== name)
-  return isChecked && others.length < max ? Array.append(others, name) : others
-}
+): ReadonlyArray<A> =>
+  Array.getSomes(
+    Array.makeBy(max, index =>
+      index === slot ? maybeName : Array.get(names, index),
+    ),
+  )
 
 const addRow = (draft: Draft, table: Table): Draft => {
   switch (table) {
@@ -488,15 +490,15 @@ export const update = (model: Model, message: Message) =>
         ...draft,
         [pool]: { ...draft[pool], [part]: value },
       })),
-    ToggledClass: ({ name, isChecked }) =>
+    SelectedClass: ({ slot, maybeName }) =>
       editDraft(model, draft => ({
         ...draft,
-        classes: toggleName(draft.classes, name, isChecked, MAX_CLASSES),
+        classes: selectName(draft.classes, slot, maybeName, MAX_CLASSES),
       })),
-    ToggledType: ({ name, isChecked }) =>
+    SelectedType: ({ slot, maybeName }) =>
       editDraft(model, draft => ({
         ...draft,
-        types: toggleName(draft.types, name, isChecked, MAX_TYPES),
+        types: selectName(draft.types, slot, maybeName, MAX_TYPES),
       })),
     AddedRow: ({ table }) => editDraft(model, draft => addRow(draft, table)),
     RemovedRow: ({ table, index }) =>
@@ -677,12 +679,14 @@ const selectView = <A extends string | number>(
   value: A,
   options: ReadonlyArray<readonly [A, string]>,
   onChange: (value: A) => Message,
+  isDisabled: boolean,
   h: HtmlBuilder<Message>,
 ): Html =>
   Select.view(
     {
       id,
       value: `${value}`,
+      isDisabled,
       onChange: selected =>
         onChange(
           Option.getOrElse(
@@ -707,64 +711,34 @@ const selectView = <A extends string | number>(
     h,
   )
 
-const checkboxGroupView = <A extends string>(
-  legend: string,
+const UNSELECTED = ''
+
+// 空きのあるスロットを作らせない。前のスロットが空なら選ばせず、後のスロットが埋まっていれば未選択に戻させない
+const nameSelectViews = <A extends string>(
+  label: string,
   idPrefix: string,
   names: ReadonlyArray<A>,
-  checked: ReadonlyArray<A>,
+  selected: ReadonlyArray<A>,
   max: number,
-  onToggle: (name: A, isChecked: boolean) => Message,
+  onSelect: (slot: number, maybeName: Option.Option<A>) => Message,
   h: HtmlBuilder<Message>,
-): Html =>
-  h.fieldset(
-    [h.Class('sm:col-span-2')],
-    [
-      h.legend([h.Class(labelStyle)], [`${legend}（${max} つまで）`]),
-      h.div(
-        [h.Class('flex flex-wrap gap-x-4 gap-y-1')],
-        Array.map(names, (name, index) => {
-          const isChecked = Array.contains(checked, name)
-          return Checkbox.view(
-            {
-              id: `${idPrefix}-${index}`,
-              isChecked,
-              isDisabled: !isChecked && checked.length >= max,
-              onToggle: next => onToggle(name, next),
-              toView: attributes =>
-                h.div(
-                  [h.Class('flex items-center gap-1')],
-                  [
-                    h.button(
-                      [
-                        ...attributes.checkbox,
-                        h.Class(
-                          'group size-4 flex items-center justify-center border border-gray-400 rounded-sm text-black data-[disabled]:opacity-40',
-                        ),
-                      ],
-                      [
-                        h.span([
-                          h.Class(
-                            'icon-[lucide--check] text-xs invisible group-data-[checked]:visible',
-                          ),
-                          h.AriaHidden(true),
-                        ]),
-                      ],
-                    ),
-                    h.label(
-                      [
-                        ...attributes.label,
-                        h.Class('text-gray-800 data-[disabled]:opacity-40'),
-                      ],
-                      [name],
-                    ),
-                  ],
-                ),
-            },
-            h,
-          )
-        }),
-      ),
-    ],
+): ReadonlyArray<Html> =>
+  Array.makeBy(max, slot =>
+    selectView<A | typeof UNSELECTED>(
+      `${idPrefix}-${slot}`,
+      `${label}（${slot + 1}つ目）`,
+      Option.getOrElse(Array.get(selected, slot), () => UNSELECTED),
+      [
+        ...(Option.isSome(Array.get(selected, slot + 1))
+          ? []
+          : [[UNSELECTED, '未選択'] as const]),
+        ...Array.map(names, name => [name, name] as const),
+      ],
+      name =>
+        onSelect(slot, name === UNSELECTED ? Option.none() : Option.some(name)),
+      slot > selected.length,
+      h,
+    ),
   )
 
 // 表の列。見出しと、行のどのフィールドを入力するか
@@ -953,6 +927,7 @@ const abilityView = (
     draft.abilities[ability],
     Array.map(DICE, die => [die, `d${die}`] as const),
     die => Message.SelectedAbility({ ability, die }),
+    false,
     h,
   )
 
@@ -973,25 +948,26 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
                 draft.level,
                 Array.map(LEVELS, level => [level, `${level}`] as const),
                 level => Message.SelectedLevel({ level }),
+                false,
                 h,
               ),
               textFieldView('exp', 'EXP', draft, h),
-              checkboxGroupView(
+              ...nameSelectViews(
                 'クラス',
                 'class',
                 CLASSES,
                 draft.classes,
                 MAX_CLASSES,
-                (name, isChecked) => Message.ToggledClass({ name, isChecked }),
+                (slot, maybeName) => Message.SelectedClass({ slot, maybeName }),
                 h,
               ),
-              checkboxGroupView(
+              ...nameSelectViews(
                 'タイプ',
                 'type',
                 TYPES,
                 draft.types,
                 MAX_TYPES,
-                (name, isChecked) => Message.ToggledType({ name, isChecked }),
+                (slot, maybeName) => Message.SelectedType({ slot, maybeName }),
                 h,
               ),
               textFieldView('gender', '性別', draft, h),
@@ -1381,7 +1357,7 @@ export const view = Submodel.defineView<Model, Message>((model, h): Html =>
 // STYLE
 
 const inputStyle =
-  'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500'
+  'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-40'
 
 const primaryButtonStyle =
   'bg-black text-white hover:bg-gray-700 disabled:opacity-50 px-4 py-2 rounded transition'

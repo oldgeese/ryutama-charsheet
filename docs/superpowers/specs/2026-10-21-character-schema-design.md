@@ -29,8 +29,8 @@
 | 竜人名、作成日、キャラクター名、プレイヤー名、性別、年齢 | `dragonName` `createdOn` `characterName` `playerName` `gender` `age` | 文字列 |
 | レベル | `level` | 1〜10 の整数 |
 | EXP | `exp` | 0 以上の整数 |
-| クラス | `classes` | 7 クラスのどれか。重複なしで最大 2 つ（レベル 5 で追加） |
-| タイプ | `types` | アタック／テクニック／マジックタイプのどれか。重複なしで最大 2 つ（レベル 6 で追加） |
+| クラス | `classes` | 7 クラスのどれか。重複ありで最大 2 つ（レベル 5 で追加） |
+| タイプ | `types` | アタック／テクニック／マジックタイプのどれか。重複ありで最大 2 つ（レベル 6 で追加） |
 | クラス能力 | `classAbilities` | `{ name, checkAbilities, effect }` の配列 |
 | 習得武器、得意地形／天候、お気に入りアイテム | `weaponProficiency` `favoredTerrainAndWeather` `favoriteItem` | 文字列 |
 | イメージカラー／外見、故郷／旅に出た理由、MEMO | `appearance` `hometownAndReason` `memo` | 文字列 |

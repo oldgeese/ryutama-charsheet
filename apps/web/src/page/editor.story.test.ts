@@ -1,3 +1,4 @@
+import { Option } from 'effect'
 import { Command, given, message, model, story } from 'foldkit/story'
 import { describe, expect, test } from 'vitest'
 
@@ -130,18 +131,106 @@ describe('editor page: inputs', () => {
     )
   })
 
-  test('toggles classes and types up to two each', () => {
+  test('selects the same class or type in both slots', () => {
     story(
       update,
       given(initNew().model),
-      message(Message.ToggledClass({ name: 'ヒーラー', isChecked: true })),
-      message(Message.ToggledClass({ name: 'ハンター', isChecked: true })),
-      message(Message.ToggledClass({ name: 'ノーブル', isChecked: true })),
-      message(Message.ToggledClass({ name: 'ヒーラー', isChecked: false })),
-      message(Message.ToggledType({ name: 'マジックタイプ', isChecked: true })),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ハンター') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(
+        Message.SelectedType({
+          slot: 0,
+          maybeName: Option.some('マジックタイプ'),
+        }),
+      ),
+      message(
+        Message.SelectedType({
+          slot: 1,
+          maybeName: Option.some('マジックタイプ'),
+        }),
+      ),
+      model(model => {
+        expect(editing(model).draft.classes).toEqual(['ハンター', 'ハンター'])
+        expect(editing(model).draft.types).toEqual([
+          'マジックタイプ',
+          'マジックタイプ',
+        ])
+      }),
+    )
+  })
+
+  test('selecting replaces only the chosen slot', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ヒーラー') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ノーブル') }),
+      ),
+      model(model => {
+        expect(editing(model).draft.classes).toEqual(['ヒーラー', 'ノーブル'])
+      }),
+    )
+  })
+
+  test('clearing the second slot keeps the first one', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ヒーラー') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(Message.SelectedClass({ slot: 1, maybeName: Option.none() })),
+      model(model => {
+        expect(editing(model).draft.classes).toEqual(['ヒーラー'])
+      }),
+    )
+  })
+
+  test('a slot past the maximum adds nothing', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ヒーラー') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 2, maybeName: Option.some('ノーブル') }),
+      ),
+      model(model => {
+        expect(editing(model).draft.classes).toEqual(['ヒーラー', 'ハンター'])
+      }),
+    )
+  })
+
+  test('clearing the first slot moves the second one up', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ヒーラー') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(Message.SelectedClass({ slot: 0, maybeName: Option.none() })),
       model(model => {
         expect(editing(model).draft.classes).toEqual(['ハンター'])
-        expect(editing(model).draft.types).toEqual(['マジックタイプ'])
       }),
     )
   })

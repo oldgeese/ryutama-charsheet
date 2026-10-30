@@ -60,14 +60,8 @@ export const CharacterSheet = Schema.Struct({
   exp: Schema.Int.check(Schema.isGreaterThanOrEqualTo(0)),
   gender: Schema.String,
   age: Schema.String,
-  classes: Schema.Array(CharacterClass).check(
-    Schema.isMaxLength(MAX_CLASSES),
-    Schema.isUnique(),
-  ),
-  types: Schema.Array(CharacterType).check(
-    Schema.isMaxLength(MAX_TYPES),
-    Schema.isUnique(),
-  ),
+  classes: Schema.Array(CharacterClass).check(Schema.isMaxLength(MAX_CLASSES)),
+  types: Schema.Array(CharacterType).check(Schema.isMaxLength(MAX_TYPES)),
   classAbilities: Schema.Array(ClassAbility),
   weaponProficiency: Schema.String,
   favoredTerrainAndWeather: Schema.String,
