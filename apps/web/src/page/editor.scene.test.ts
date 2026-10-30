@@ -106,6 +106,52 @@ describe('editor page view', () => {
     )
   })
 
+  test('the second select stays disabled until the first is chosen', () => {
+    scene(
+      { update, view },
+      given(initNew().model),
+      expect(role('combobox', { name: 'クラス（2つ目）' })).toBeDisabled(),
+      expect(role('combobox', { name: 'タイプ（2つ目）' })).toBeDisabled(),
+      change(role('combobox', { name: 'クラス（1つ目）' }), 'ハンター'),
+      expect(role('combobox', { name: 'クラス（2つ目）' })).toBeEnabled(),
+      expect(role('combobox', { name: 'タイプ（2つ目）' })).toBeDisabled(),
+    )
+  })
+
+  test('the first select cannot be cleared while the second is chosen', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      inside(
+        role('combobox', { name: 'クラス（1つ目）' }),
+        expect(role('option', { name: '未選択' })).not.toExist(),
+      ),
+      inside(
+        role('combobox', { name: 'クラス（2つ目）' }),
+        expect(role('option', { name: '未選択' })).toExist(),
+      ),
+    )
+  })
+
+  test('clearing the second select makes the first clearable again', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      change(role('combobox', { name: 'クラス（2つ目）' }), ''),
+      expect(role('combobox', { name: 'クラス（1つ目）' })).toHaveValue(
+        'ミンストレル',
+      ),
+      expect(role('combobox', { name: 'クラス（2つ目）' })).toHaveValue(''),
+      inside(
+        role('combobox', { name: 'クラス（1つ目）' }),
+        expect(role('option', { name: '未選択' })).toExist(),
+      ),
+      change(role('combobox', { name: 'クラス（1つ目）' }), ''),
+      expect(role('combobox', { name: 'クラス（1つ目）' })).toHaveValue(''),
+      expect(role('combobox', { name: 'クラス（2つ目）' })).toBeDisabled(),
+    )
+  })
+
   test('typing and adding rows update the form', () => {
     scene(
       { update, view },

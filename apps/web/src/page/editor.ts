@@ -679,12 +679,14 @@ const selectView = <A extends string | number>(
   value: A,
   options: ReadonlyArray<readonly [A, string]>,
   onChange: (value: A) => Message,
+  isDisabled: boolean,
   h: HtmlBuilder<Message>,
 ): Html =>
   Select.view(
     {
       id,
       value: `${value}`,
+      isDisabled,
       onChange: selected =>
         onChange(
           Option.getOrElse(
@@ -711,6 +713,7 @@ const selectView = <A extends string | number>(
 
 const UNSELECTED = ''
 
+// 空きのあるスロットを作らせない。前のスロットが空なら選ばせず、後のスロットが埋まっていれば未選択に戻させない
 const nameSelectViews = <A extends string>(
   label: string,
   idPrefix: string,
@@ -726,11 +729,14 @@ const nameSelectViews = <A extends string>(
       `${label}（${slot + 1}つ目）`,
       Option.getOrElse(Array.get(selected, slot), () => UNSELECTED),
       [
-        [UNSELECTED, '未選択'],
+        ...(Option.isSome(Array.get(selected, slot + 1))
+          ? []
+          : [[UNSELECTED, '未選択'] as const]),
         ...Array.map(names, name => [name, name] as const),
       ],
       name =>
         onSelect(slot, name === UNSELECTED ? Option.none() : Option.some(name)),
+      slot > selected.length,
       h,
     ),
   )
@@ -921,6 +927,7 @@ const abilityView = (
     draft.abilities[ability],
     Array.map(DICE, die => [die, `d${die}`] as const),
     die => Message.SelectedAbility({ ability, die }),
+    false,
     h,
   )
 
@@ -941,6 +948,7 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
                 draft.level,
                 Array.map(LEVELS, level => [level, `${level}`] as const),
                 level => Message.SelectedLevel({ level }),
+                false,
                 h,
               ),
               textFieldView('exp', 'EXP', draft, h),
@@ -1349,7 +1357,7 @@ export const view = Submodel.defineView<Model, Message>((model, h): Html =>
 // STYLE
 
 const inputStyle =
-  'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500'
+  'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-40'
 
 const primaryButtonStyle =
   'bg-black text-white hover:bg-gray-700 disabled:opacity-50 px-4 py-2 rounded transition'

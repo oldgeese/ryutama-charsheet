@@ -182,6 +182,42 @@ describe('editor page: inputs', () => {
     )
   })
 
+  test('clearing the second slot keeps the first one', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ヒーラー') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(Message.SelectedClass({ slot: 1, maybeName: Option.none() })),
+      model(model => {
+        expect(editing(model).draft.classes).toEqual(['ヒーラー'])
+      }),
+    )
+  })
+
+  test('a slot past the maximum adds nothing', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(
+        Message.SelectedClass({ slot: 0, maybeName: Option.some('ヒーラー') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 1, maybeName: Option.some('ハンター') }),
+      ),
+      message(
+        Message.SelectedClass({ slot: 2, maybeName: Option.some('ノーブル') }),
+      ),
+      model(model => {
+        expect(editing(model).draft.classes).toEqual(['ヒーラー', 'ハンター'])
+      }),
+    )
+  })
+
   test('clearing the first slot moves the second one up', () => {
     story(
       update,
