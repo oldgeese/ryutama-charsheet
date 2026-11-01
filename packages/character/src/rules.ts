@@ -13,6 +13,11 @@ export const CharacterClass = Schema.Literals([
 ])
 export type CharacterClass = typeof CharacterClass.Type
 
+// ミンストレルは地形や天候の音楽を憶えられる
+export const canLearnMusic = (
+  classes: ReadonlyArray<CharacterClass>,
+): boolean => classes.includes('ミンストレル')
+
 export const CharacterType = Schema.Literals([
   'アタックタイプ',
   'テクニックタイプ',

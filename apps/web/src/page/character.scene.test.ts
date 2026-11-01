@@ -1,4 +1,4 @@
-import { expect, given, role, scene, text } from 'foldkit/scene'
+import { expect, given, inside, role, scene, text } from 'foldkit/scene'
 import { describe, test } from 'vitest'
 
 import { type CharacterSheet, emptySheet } from '@ryutama/character'
@@ -31,6 +31,63 @@ const lulu: CharacterSheet = {
 }
 
 describe('character page view', () => {
+  test('a Minstrel shows learned music in the terrain and weather tables', () => {
+    scene(
+      { update, view },
+      given(
+        Sheet.Loaded({
+          id: 'lulu',
+          sheet: {
+            ...lulu,
+            learnedTerrainMusic: ['森'],
+            learnedWeatherMusic: ['雪'],
+          },
+        }),
+      ),
+      inside(
+        role('table', { name: '地形ごとのチェックボーナス' }),
+        expect(role('columnheader', { name: '音楽' })).toExist(),
+        expect(role('row', { name: '森—✓' })).toExist(),
+        expect(role('row', { name: '草原+1—' })).toExist(),
+      ),
+      inside(
+        role('table', { name: '天候ごとのチェックペナルティ' }),
+        expect(role('columnheader', { name: '音楽' })).toExist(),
+        expect(role('row', { name: '雪—✓' })).toExist(),
+        expect(role('row', { name: '雨——' })).toExist(),
+      ),
+      inside(
+        role('table', { name: '状態異常' }),
+        expect(role('columnheader', { name: '音楽' })).not.toExist(),
+      ),
+    )
+  })
+
+  test('a character without Minstrel has no music column, even with saved music', () => {
+    scene(
+      { update, view },
+      given(
+        Sheet.Loaded({
+          id: 'lulu',
+          sheet: {
+            ...lulu,
+            classes: ['ヒーラー'],
+            learnedTerrainMusic: ['森'],
+          },
+        }),
+      ),
+      inside(
+        role('table', { name: '地形ごとのチェックボーナス' }),
+        expect(role('columnheader', { name: '音楽' })).not.toExist(),
+        expect(role('row', { name: '森—' })).toExist(),
+      ),
+      inside(
+        role('table', { name: '天候ごとのチェックペナルティ' }),
+        expect(role('columnheader', { name: '音楽' })).not.toExist(),
+      ),
+    )
+  })
+
   test('shows the sheet', () => {
     scene(
       { update, view },

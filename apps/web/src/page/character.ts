@@ -5,7 +5,7 @@ import { defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 
 import { Button } from '@foldkit/ui'
-import { CharacterSheet } from '@ryutama/character'
+import { CharacterSheet, canLearnMusic } from '@ryutama/character'
 
 import { fetchCharacter } from '../firebase/characters'
 import type { FirebaseService } from '../firebase/service'
@@ -225,14 +225,35 @@ const recordTableView = (
   keyHeader: string,
   valueHeader: string,
   record: Readonly<Record<string, string>>,
+  maybeLearnedMusic: Option.Option<ReadonlyArray<string>>,
   h: HtmlBuilder<Message>,
 ): Html =>
-  tableView(
-    caption,
-    [keyHeader, valueHeader],
-    Array.map(Record.toEntries(record), ([key, value]) => [key, value]),
-    h,
-  )
+  Option.match(maybeLearnedMusic, {
+    onNone: () =>
+      tableView(
+        caption,
+        [keyHeader, valueHeader],
+        Array.map(Record.toEntries(record), ([key, value]) => [key, value]),
+        h,
+      ),
+    onSome: learned =>
+      tableView(
+        caption,
+        [keyHeader, valueHeader, '音楽'],
+        Array.map(Record.toEntries(record), ([key, value]) => [
+          key,
+          value,
+          Array.contains(learned, key) ? '✓' : '',
+        ]),
+        h,
+      ),
+  })
+
+const maybeLearnedMusic = (
+  sheet: CharacterSheet,
+  learned: ReadonlyArray<string>,
+): Option.Option<ReadonlyArray<string>> =>
+  canLearnMusic(sheet.classes) ? Option.some(learned) : Option.none()
 
 const pointsText = ({
   max,
@@ -371,6 +392,7 @@ const sheetView = (
             '地形',
             'ボーナス',
             sheet.terrainBonuses,
+            maybeLearnedMusic(sheet, sheet.learnedTerrainMusic),
             h,
           ),
           recordTableView(
@@ -378,6 +400,7 @@ const sheetView = (
             '天候',
             'ペナルティ',
             sheet.weatherPenalties,
+            maybeLearnedMusic(sheet, sheet.learnedWeatherMusic),
             h,
           ),
         ],
@@ -391,6 +414,7 @@ const sheetView = (
             '状態異常',
             '強度',
             sheet.statusEffects,
+            Option.none(),
             h,
           ),
         ],

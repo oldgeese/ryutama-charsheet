@@ -290,6 +290,34 @@ describe('editor page: inputs', () => {
       }),
     )
   })
+
+  test('learned terrain and weather music are toggled independently', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(Message.ToggledTerrainMusic({ terrain: '森', isLearned: true })),
+      message(Message.ToggledTerrainMusic({ terrain: '山', isLearned: true })),
+      message(Message.ToggledWeatherMusic({ weather: '雪', isLearned: true })),
+      message(Message.ToggledTerrainMusic({ terrain: '森', isLearned: false })),
+      model(model => {
+        const { draft } = editing(model)
+        expect(draft.learnedTerrainMusic).toEqual(['山'])
+        expect(draft.learnedWeatherMusic).toEqual(['雪'])
+      }),
+    )
+  })
+
+  test('learning the same music twice keeps a single entry', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(Message.ToggledWeatherMusic({ weather: '雪', isLearned: true })),
+      message(Message.ToggledWeatherMusic({ weather: '雪', isLearned: true })),
+      model(model => {
+        expect(editing(model).draft.learnedWeatherMusic).toEqual(['雪'])
+      }),
+    )
+  })
 })
 
 describe('editor page: creating', () => {

@@ -84,6 +84,27 @@ describe('CharacterSheet', () => {
     expect(isSheet({ ...emptySheet, terrainBonuses })).toBe(false)
   })
 
+  test('keeps learned terrain and weather music through decoding', () => {
+    const decode = Schema.decodeUnknownSync(CharacterSheet)
+    expect(
+      decode({
+        ...emptySheet,
+        learnedTerrainMusic: ['草原', '森'],
+        learnedWeatherMusic: ['雪'],
+      }),
+    ).toMatchObject({
+      learnedTerrainMusic: ['草原', '森'],
+      learnedWeatherMusic: ['雪'],
+    })
+  })
+
+  test('rejects music that is not a terrain or weather of its own kind', () => {
+    expect(isSheet({ ...emptySheet, learnedTerrainMusic: ['雪'] })).toBe(false)
+    expect(isSheet({ ...emptySheet, learnedWeatherMusic: ['草原'] })).toBe(
+      false,
+    )
+  })
+
   test('survives a JSON round trip', () => {
     const decode = Schema.decodeUnknownSync(CharacterSheet)
     expect(decode(JSON.parse(JSON.stringify(emptySheet)))).toEqual(emptySheet)

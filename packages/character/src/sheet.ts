@@ -87,6 +87,8 @@ export const CharacterSheet = Schema.Struct({
   travelGear: Schema.Array(TravelGear),
   terrainBonuses: Schema.Record(Terrain, Schema.String),
   weatherPenalties: Schema.Record(Weather, Schema.String),
+  learnedTerrainMusic: Schema.Array(Terrain),
+  learnedWeatherMusic: Schema.Array(Weather),
   statusEffects: Schema.Record(StatusEffect, Schema.String),
 })
 export type CharacterSheet = typeof CharacterSheet.Type
@@ -144,6 +146,8 @@ export const emptySheet: CharacterSheet = {
     大嵐: '',
     猛吹雪: '',
   },
+  learnedTerrainMusic: [],
+  learnedWeatherMusic: [],
   statusEffects: {
     大ケガ: '',
     毒: '',
