@@ -152,6 +152,70 @@ describe('editor page view', () => {
     )
   })
 
+  test('music checkboxes appear only while a class is Minstrel', () => {
+    scene(
+      { update, view },
+      given(initNew().model),
+      expect(role('checkbox', { name: '草原の音楽を憶えた' })).not.toExist(),
+      expect(role('checkbox', { name: '雪の音楽を憶えた' })).not.toExist(),
+      change(role('combobox', { name: 'クラス（1つ目）' }), 'ハンター'),
+      expect(role('checkbox', { name: '草原の音楽を憶えた' })).not.toExist(),
+      change(role('combobox', { name: 'クラス（2つ目）' }), 'ミンストレル'),
+      expect(role('checkbox', { name: '草原の音楽を憶えた' })).toExist(),
+      expect(role('checkbox', { name: '雪の音楽を憶えた' })).toExist(),
+    )
+  })
+
+  test('status effects never get a music checkbox', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      expect(role('checkbox', { name: '毒の音楽を憶えた' })).not.toExist(),
+    )
+  })
+
+  test('clicking a music checkbox toggles only that music', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      click(role('checkbox', { name: '森の音楽を憶えた' })),
+      click(role('checkbox', { name: '雪の音楽を憶えた' })),
+      expect(role('checkbox', { name: '森の音楽を憶えた' })).toHaveAttr(
+        'aria-checked',
+        'true',
+      ),
+      expect(role('checkbox', { name: '雪の音楽を憶えた' })).toHaveAttr(
+        'aria-checked',
+        'true',
+      ),
+      expect(role('checkbox', { name: '山の音楽を憶えた' })).toHaveAttr(
+        'aria-checked',
+        'false',
+      ),
+      click(role('checkbox', { name: '森の音楽を憶えた' })),
+      expect(role('checkbox', { name: '森の音楽を憶えた' })).toHaveAttr(
+        'aria-checked',
+        'false',
+      ),
+    )
+  })
+
+  test('learned music comes back when Minstrel is chosen again', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      click(role('checkbox', { name: '森の音楽を憶えた' })),
+      change(role('combobox', { name: 'クラス（2つ目）' }), ''),
+      change(role('combobox', { name: 'クラス（1つ目）' }), 'ハンター'),
+      expect(role('checkbox', { name: '森の音楽を憶えた' })).not.toExist(),
+      change(role('combobox', { name: 'クラス（1つ目）' }), 'ミンストレル'),
+      expect(role('checkbox', { name: '森の音楽を憶えた' })).toHaveAttr(
+        'aria-checked',
+        'true',
+      ),
+    )
+  })
+
   test('typing and adding rows update the form', () => {
     scene(
       { update, view },

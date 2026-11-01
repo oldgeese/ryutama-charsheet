@@ -290,6 +290,25 @@ describe('editor page: inputs', () => {
       }),
     )
   })
+
+  test('learned terrain and weather music are toggled independently', () => {
+    story(
+      update,
+      given(initNew().model),
+      message(Message.ToggledTerrainMusic({ terrain: '森', isLearned: true })),
+      message(Message.ToggledTerrainMusic({ terrain: '山', isLearned: true })),
+      message(Message.ToggledWeatherMusic({ weather: '雪', isLearned: true })),
+      message(Message.ToggledTerrainMusic({ terrain: '森', isLearned: false })),
+      model(model => {
+        const { draft } = editing(model)
+        expect(draft.learnedTerrainMusic.森).toBe(false)
+        expect(draft.learnedTerrainMusic.山).toBe(true)
+        expect(draft.learnedTerrainMusic.草原).toBe(false)
+        expect(draft.learnedWeatherMusic.雪).toBe(true)
+        expect(draft.learnedWeatherMusic.雨).toBe(false)
+      }),
+    )
+  })
 })
 
 describe('editor page: creating', () => {

@@ -5,7 +5,7 @@ import { defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 
 import { Button } from '@foldkit/ui'
-import { CharacterSheet } from '@ryutama/character'
+import { CharacterSheet, whenCanLearnMusic } from '@ryutama/character'
 
 import { fetchCharacter } from '../firebase/characters'
 import type { FirebaseService } from '../firebase/service'
@@ -225,12 +225,27 @@ const recordTableView = (
   keyHeader: string,
   valueHeader: string,
   record: Readonly<Record<string, string>>,
+  maybeLearnedMusic: Option.Option<Readonly<Record<string, boolean>>>,
   h: HtmlBuilder<Message>,
 ): Html =>
   tableView(
     caption,
-    [keyHeader, valueHeader],
-    Array.map(Record.toEntries(record), ([key, value]) => [key, value]),
+    [
+      keyHeader,
+      valueHeader,
+      ...Option.match(maybeLearnedMusic, {
+        onNone: () => [],
+        onSome: () => ['音楽'],
+      }),
+    ],
+    Array.map(Record.toEntries(record), ([key, value]) => [
+      key,
+      value,
+      ...Option.match(maybeLearnedMusic, {
+        onNone: () => [],
+        onSome: learned => [learned[key] === true ? '✓' : ''],
+      }),
+    ]),
     h,
   )
 
@@ -371,6 +386,7 @@ const sheetView = (
             '地形',
             'ボーナス',
             sheet.terrainBonuses,
+            whenCanLearnMusic(sheet.classes, sheet.learnedTerrainMusic),
             h,
           ),
           recordTableView(
@@ -378,6 +394,7 @@ const sheetView = (
             '天候',
             'ペナルティ',
             sheet.weatherPenalties,
+            whenCanLearnMusic(sheet.classes, sheet.learnedWeatherMusic),
             h,
           ),
         ],
@@ -391,6 +408,7 @@ const sheetView = (
             '状態異常',
             '強度',
             sheet.statusEffects,
+            Option.none(),
             h,
           ),
         ],

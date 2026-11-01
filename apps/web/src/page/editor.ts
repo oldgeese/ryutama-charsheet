@@ -6,7 +6,7 @@ import { pushUrl } from 'foldkit/navigation'
 import { defineTaggedUnion } from 'foldkit/schema'
 import { modifyFields } from 'foldkit/struct'
 
-import { Button, Dialog, Input, Select, Textarea } from '@foldkit/ui'
+import { Button, Checkbox, Dialog, Input, Select, Textarea } from '@foldkit/ui'
 import {
   AbilityDie,
   CharacterClass,
@@ -19,6 +19,7 @@ import {
   StatusEffect,
   Terrain,
   Weather,
+  whenCanLearnMusic,
 } from '@ryutama/character'
 
 import { Draft, emptyDraft, fromSheet, toSheet } from '../draft'
@@ -169,6 +170,8 @@ export const Message = defineMessageUnion({
   },
   UpdatedTerrainBonus: { terrain: Terrain, value: Schema.String },
   UpdatedWeatherPenalty: { weather: Weather, value: Schema.String },
+  ToggledTerrainMusic: { terrain: Terrain, isLearned: Schema.Boolean },
+  ToggledWeatherMusic: { weather: Weather, isLearned: Schema.Boolean },
   UpdatedStatusEffect: { effect: StatusEffect, value: Schema.String },
   UpdatedPassword: { value: Schema.String },
   ClickedSave: {},
@@ -545,6 +548,22 @@ export const update = (model: Model, message: Message) =>
         ...draft,
         weatherPenalties: { ...draft.weatherPenalties, [weather]: value },
       })),
+    ToggledTerrainMusic: ({ terrain, isLearned }) =>
+      editDraft(model, draft => ({
+        ...draft,
+        learnedTerrainMusic: {
+          ...draft.learnedTerrainMusic,
+          [terrain]: isLearned,
+        },
+      })),
+    ToggledWeatherMusic: ({ weather, isLearned }) =>
+      editDraft(model, draft => ({
+        ...draft,
+        learnedWeatherMusic: {
+          ...draft.learnedWeatherMusic,
+          [weather]: isLearned,
+        },
+      })),
     UpdatedStatusEffect: ({ effect, value }) =>
       editDraft(model, draft => ({
         ...draft,
@@ -867,11 +886,63 @@ const rowsEditorView = <Field extends string>(
     ],
   )
 
+const musicCheckboxView = (
+  id: string,
+  name: string,
+  isChecked: boolean,
+  onToggle: (isLearned: boolean) => Message,
+  h: HtmlBuilder<Message>,
+): Html =>
+  Checkbox.view(
+    {
+      id,
+      isChecked,
+      onToggle,
+      toView: attributes =>
+        h.div(
+          [h.Class('mt-1 flex items-center gap-1')],
+          [
+            h.button(
+              [
+                ...attributes.checkbox,
+                h.Class(
+                  'group size-4 flex items-center justify-center border border-gray-400 rounded-sm text-black',
+                ),
+              ],
+              [
+                h.span(
+                  [
+                    h.Class('text-xs invisible group-data-[checked]:visible'),
+                    h.AriaHidden(true),
+                  ],
+                  ['✓'],
+                ),
+              ],
+            ),
+            h.label(
+              [...attributes.label, h.Class('text-sm text-gray-800')],
+              [
+                h.span([h.Class('sr-only')], [`${name}の音楽を憶えた`]),
+                h.span([h.AriaHidden(true)], ['音楽']),
+              ],
+            ),
+          ],
+        ),
+    },
+    h,
+  )
+
+type MusicConfig<K extends string> = Readonly<{
+  learned: Readonly<Record<K, boolean>>
+  onToggle: (key: K, isLearned: boolean) => Message
+}>
+
 const recordEditorView = <K extends string>(
   caption: string,
   idPrefix: string,
   record: Readonly<Record<K, string>>,
   onInput: (key: K, value: string) => Message,
+  maybeMusic: Option.Option<MusicConfig<K>>,
   h: HtmlBuilder<Message>,
 ): Html =>
   h.fieldset(
@@ -881,12 +952,29 @@ const recordEditorView = <K extends string>(
       h.div(
         [h.Class('grid gap-2 grid-cols-2 sm:grid-cols-4')],
         Array.map(Record.toEntries(record), ([key, value], index) =>
-          textInputView(
-            `${idPrefix}-${index}`,
-            key,
-            value,
-            next => onInput(key, next),
-            h,
+          h.div(
+            [],
+            [
+              textInputView(
+                `${idPrefix}-${index}`,
+                key,
+                value,
+                next => onInput(key, next),
+                h,
+              ),
+              ...Option.match(maybeMusic, {
+                onNone: () => [],
+                onSome: ({ learned, onToggle }) => [
+                  musicCheckboxView(
+                    `${idPrefix}-${index}-music`,
+                    key,
+                    learned[key],
+                    isLearned => onToggle(key, isLearned),
+                    h,
+                  ),
+                ],
+              }),
+            ],
           ),
         ),
       ),
@@ -1075,6 +1163,11 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             'terrain',
             draft.terrainBonuses,
             (terrain, value) => Message.UpdatedTerrainBonus({ terrain, value }),
+            whenCanLearnMusic(draft.classes, {
+              learned: draft.learnedTerrainMusic,
+              onToggle: (terrain: Terrain, isLearned: boolean) =>
+                Message.ToggledTerrainMusic({ terrain, isLearned }),
+            }),
             h,
           ),
           recordEditorView(
@@ -1083,6 +1176,11 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             draft.weatherPenalties,
             (weather, value) =>
               Message.UpdatedWeatherPenalty({ weather, value }),
+            whenCanLearnMusic(draft.classes, {
+              learned: draft.learnedWeatherMusic,
+              onToggle: (weather: Weather, isLearned: boolean) =>
+                Message.ToggledWeatherMusic({ weather, isLearned }),
+            }),
             h,
           ),
         ],
@@ -1096,6 +1194,7 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             'status',
             draft.statusEffects,
             (effect, value) => Message.UpdatedStatusEffect({ effect, value }),
+            Option.none(),
             h,
           ),
         ],

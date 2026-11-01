@@ -13,6 +13,16 @@ describe('draft', () => {
     expect(toSheet(fromSheet(lulu))).toEqual(Result.succeed(lulu))
   })
 
+  test('keeps learned music when saving', () => {
+    const minstrel: CharacterSheet = {
+      ...lulu,
+      classes: ['ミンストレル'],
+      learnedTerrainMusic: { ...emptySheet.learnedTerrainMusic, 森: true },
+      learnedWeatherMusic: { ...emptySheet.learnedWeatherMusic, 雪: true },
+    }
+    expect(toSheet(fromSheet(minstrel))).toEqual(Result.succeed(minstrel))
+  })
+
   test('starts from an empty sheet', () => {
     expect(toSheet(emptyDraft)).toEqual(Result.succeed(emptySheet))
   })

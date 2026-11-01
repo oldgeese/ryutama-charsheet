@@ -87,6 +87,9 @@ export const CharacterSheet = Schema.Struct({
   travelGear: Schema.Array(TravelGear),
   terrainBonuses: Schema.Record(Terrain, Schema.String),
   weatherPenalties: Schema.Record(Weather, Schema.String),
+  // 同じ音楽を重ねて憶えることはないので、地形や天候ごとの有無で持つ
+  learnedTerrainMusic: Schema.Record(Terrain, Schema.Boolean),
+  learnedWeatherMusic: Schema.Record(Weather, Schema.Boolean),
   statusEffects: Schema.Record(StatusEffect, Schema.String),
 })
 export type CharacterSheet = typeof CharacterSheet.Type
@@ -143,6 +146,32 @@ export const emptySheet: CharacterSheet = {
     闇: '',
     大嵐: '',
     猛吹雪: '',
+  },
+  learnedTerrainMusic: {
+    草原: false,
+    荒野: false,
+    林: false,
+    丘陵: false,
+    岩場: false,
+    森: false,
+    湿地: false,
+    山: false,
+    砂漠: false,
+    密林: false,
+    高山: false,
+  },
+  learnedWeatherMusic: {
+    雨: false,
+    強風: false,
+    霧: false,
+    暑い: false,
+    寒い: false,
+    豪雨: false,
+    雪: false,
+    濃霧: false,
+    闇: false,
+    大嵐: false,
+    猛吹雪: false,
   },
   statusEffects: {
     大ケガ: '',

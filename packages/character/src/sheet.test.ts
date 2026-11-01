@@ -84,6 +84,47 @@ describe('CharacterSheet', () => {
     expect(isSheet({ ...emptySheet, terrainBonuses })).toBe(false)
   })
 
+  test('keeps learned terrain and weather music through decoding', () => {
+    const decode = Schema.decodeUnknownSync(CharacterSheet)
+    const decoded = decode({
+      ...emptySheet,
+      learnedTerrainMusic: {
+        ...emptySheet.learnedTerrainMusic,
+        草原: true,
+        森: true,
+      },
+      learnedWeatherMusic: { ...emptySheet.learnedWeatherMusic, 雪: true },
+    })
+    expect(decoded.learnedTerrainMusic.草原).toBe(true)
+    expect(decoded.learnedTerrainMusic.森).toBe(true)
+    expect(decoded.learnedTerrainMusic.山).toBe(false)
+    expect(decoded.learnedWeatherMusic.雪).toBe(true)
+    expect(decoded.learnedWeatherMusic.雨).toBe(false)
+  })
+
+  test('an empty sheet has learned no music', () => {
+    expect(Object.values(emptySheet.learnedTerrainMusic)).toHaveLength(11)
+    expect(Object.values(emptySheet.learnedWeatherMusic)).toHaveLength(11)
+    expect(Object.values(emptySheet.learnedTerrainMusic)).not.toContain(true)
+    expect(Object.values(emptySheet.learnedWeatherMusic)).not.toContain(true)
+  })
+
+  test('learned music cannot be stored as a list that allows duplicates', () => {
+    expect(isSheet({ ...emptySheet, learnedTerrainMusic: ['森', '森'] })).toBe(
+      false,
+    )
+    expect(isSheet({ ...emptySheet, learnedWeatherMusic: ['雪', '雪'] })).toBe(
+      false,
+    )
+  })
+
+  test('requires every terrain and weather key in learned music', () => {
+    const { 草原: _, ...learnedTerrainMusic } = emptySheet.learnedTerrainMusic
+    expect(isSheet({ ...emptySheet, learnedTerrainMusic })).toBe(false)
+    const { 雪: __, ...learnedWeatherMusic } = emptySheet.learnedWeatherMusic
+    expect(isSheet({ ...emptySheet, learnedWeatherMusic })).toBe(false)
+  })
+
   test('survives a JSON round trip', () => {
     const decode = Schema.decodeUnknownSync(CharacterSheet)
     expect(decode(JSON.parse(JSON.stringify(emptySheet)))).toEqual(emptySheet)
