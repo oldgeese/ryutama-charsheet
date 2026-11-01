@@ -154,6 +154,33 @@ describe('updateCharacter', () => {
 })
 
 describe('duplicateCharacter', () => {
+  test('copies learned music', async () => {
+    const { store, records } = makeStore()
+    const { id } = await createCharacter(
+      store,
+      {
+        sheet: {
+          ...sheet,
+          classes: ['ミンストレル'],
+          learnedTerrainMusic: { ...emptySheet.learnedTerrainMusic, 森: true },
+          learnedWeatherMusic: { ...emptySheet.learnedWeatherMusic, 雪: true },
+        },
+        password: 'ひみつ',
+      },
+      NOW,
+    )
+
+    const copy = await duplicateCharacter(
+      store,
+      { id, password: 'ひみつ' },
+      NOW,
+    )
+
+    expect(records.get(copy.id)?.sheet.learnedTerrainMusic.森).toBe(true)
+    expect(records.get(copy.id)?.sheet.learnedTerrainMusic.山).toBe(false)
+    expect(records.get(copy.id)?.sheet.learnedWeatherMusic.雪).toBe(true)
+  })
+
   test('copies the character with the same password', async () => {
     const { store, records } = makeStore()
     const { id } = await createCharacter(
