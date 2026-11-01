@@ -301,20 +301,11 @@ describe('editor page: inputs', () => {
       message(Message.ToggledTerrainMusic({ terrain: '森', isLearned: false })),
       model(model => {
         const { draft } = editing(model)
-        expect(draft.learnedTerrainMusic).toEqual(['山'])
-        expect(draft.learnedWeatherMusic).toEqual(['雪'])
-      }),
-    )
-  })
-
-  test('learning the same music twice keeps a single entry', () => {
-    story(
-      update,
-      given(initNew().model),
-      message(Message.ToggledWeatherMusic({ weather: '雪', isLearned: true })),
-      message(Message.ToggledWeatherMusic({ weather: '雪', isLearned: true })),
-      model(model => {
-        expect(editing(model).draft.learnedWeatherMusic).toEqual(['雪'])
+        expect(draft.learnedTerrainMusic.森).toBe(false)
+        expect(draft.learnedTerrainMusic.山).toBe(true)
+        expect(draft.learnedTerrainMusic.草原).toBe(false)
+        expect(draft.learnedWeatherMusic.雪).toBe(true)
+        expect(draft.learnedWeatherMusic.雨).toBe(false)
       }),
     )
   })

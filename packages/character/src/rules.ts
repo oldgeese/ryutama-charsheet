@@ -1,4 +1,4 @@
-import { Schema } from 'effect'
+import { Option, Schema } from 'effect'
 
 // ルールブック（基本ルール）の用語。表記はルールブックのまま
 
@@ -14,9 +14,11 @@ export const CharacterClass = Schema.Literals([
 export type CharacterClass = typeof CharacterClass.Type
 
 // ミンストレルは地形や天候の音楽を憶えられる
-export const canLearnMusic = (
+export const whenCanLearnMusic = <A>(
   classes: ReadonlyArray<CharacterClass>,
-): boolean => classes.includes('ミンストレル')
+  value: A,
+): Option.Option<A> =>
+  classes.includes('ミンストレル') ? Option.some(value) : Option.none()
 
 export const CharacterType = Schema.Literals([
   'アタックタイプ',

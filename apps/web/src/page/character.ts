@@ -5,7 +5,7 @@ import { defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 
 import { Button } from '@foldkit/ui'
-import { CharacterSheet, canLearnMusic } from '@ryutama/character'
+import { CharacterSheet, whenCanLearnMusic } from '@ryutama/character'
 
 import { fetchCharacter } from '../firebase/characters'
 import type { FirebaseService } from '../firebase/service'
@@ -225,35 +225,29 @@ const recordTableView = (
   keyHeader: string,
   valueHeader: string,
   record: Readonly<Record<string, string>>,
-  maybeLearnedMusic: Option.Option<ReadonlyArray<string>>,
+  maybeLearnedMusic: Option.Option<Readonly<Record<string, boolean>>>,
   h: HtmlBuilder<Message>,
 ): Html =>
-  Option.match(maybeLearnedMusic, {
-    onNone: () =>
-      tableView(
-        caption,
-        [keyHeader, valueHeader],
-        Array.map(Record.toEntries(record), ([key, value]) => [key, value]),
-        h,
-      ),
-    onSome: learned =>
-      tableView(
-        caption,
-        [keyHeader, valueHeader, '音楽'],
-        Array.map(Record.toEntries(record), ([key, value]) => [
-          key,
-          value,
-          Array.contains(learned, key) ? '✓' : '',
-        ]),
-        h,
-      ),
-  })
-
-const maybeLearnedMusic = (
-  sheet: CharacterSheet,
-  learned: ReadonlyArray<string>,
-): Option.Option<ReadonlyArray<string>> =>
-  canLearnMusic(sheet.classes) ? Option.some(learned) : Option.none()
+  tableView(
+    caption,
+    [
+      keyHeader,
+      valueHeader,
+      ...Option.match(maybeLearnedMusic, {
+        onNone: () => [],
+        onSome: () => ['音楽'],
+      }),
+    ],
+    Array.map(Record.toEntries(record), ([key, value]) => [
+      key,
+      value,
+      ...Option.match(maybeLearnedMusic, {
+        onNone: () => [],
+        onSome: learned => [learned[key] === true ? '✓' : ''],
+      }),
+    ]),
+    h,
+  )
 
 const pointsText = ({
   max,
@@ -392,7 +386,7 @@ const sheetView = (
             '地形',
             'ボーナス',
             sheet.terrainBonuses,
-            maybeLearnedMusic(sheet, sheet.learnedTerrainMusic),
+            whenCanLearnMusic(sheet.classes, sheet.learnedTerrainMusic),
             h,
           ),
           recordTableView(
@@ -400,7 +394,7 @@ const sheetView = (
             '天候',
             'ペナルティ',
             sheet.weatherPenalties,
-            maybeLearnedMusic(sheet, sheet.learnedWeatherMusic),
+            whenCanLearnMusic(sheet.classes, sheet.learnedWeatherMusic),
             h,
           ),
         ],

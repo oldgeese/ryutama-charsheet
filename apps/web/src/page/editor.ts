@@ -19,7 +19,7 @@ import {
   StatusEffect,
   Terrain,
   Weather,
-  canLearnMusic,
+  whenCanLearnMusic,
 } from '@ryutama/character'
 
 import { Draft, emptyDraft, fromSheet, toSheet } from '../draft'
@@ -299,15 +299,6 @@ const modifyAt = <A>(
 ): ReadonlyArray<A> =>
   Option.getOrElse(Array.modify(rows, index, f), () => rows)
 
-const setLearned = <A>(
-  learned: ReadonlyArray<A>,
-  name: A,
-  isLearned: boolean,
-): ReadonlyArray<A> => {
-  const others = Array.filter(learned, other => other !== name)
-  return isLearned ? Array.append(others, name) : others
-}
-
 const selectName = <A>(
   names: ReadonlyArray<A>,
   slot: number,
@@ -560,20 +551,18 @@ export const update = (model: Model, message: Message) =>
     ToggledTerrainMusic: ({ terrain, isLearned }) =>
       editDraft(model, draft => ({
         ...draft,
-        learnedTerrainMusic: setLearned(
-          draft.learnedTerrainMusic,
-          terrain,
-          isLearned,
-        ),
+        learnedTerrainMusic: {
+          ...draft.learnedTerrainMusic,
+          [terrain]: isLearned,
+        },
       })),
     ToggledWeatherMusic: ({ weather, isLearned }) =>
       editDraft(model, draft => ({
         ...draft,
-        learnedWeatherMusic: setLearned(
-          draft.learnedWeatherMusic,
-          weather,
-          isLearned,
-        ),
+        learnedWeatherMusic: {
+          ...draft.learnedWeatherMusic,
+          [weather]: isLearned,
+        },
       })),
     UpdatedStatusEffect: ({ effect, value }) =>
       editDraft(model, draft => ({
@@ -933,9 +922,8 @@ const musicCheckboxView = (
             h.label(
               [...attributes.label, h.Class('text-sm text-gray-800')],
               [
-                h.span([h.Class('sr-only')], [`${name}の`]),
-                '音楽',
-                h.span([h.Class('sr-only')], ['を憶えた']),
+                h.span([h.Class('sr-only')], [`${name}の音楽を憶えた`]),
+                h.span([h.AriaHidden(true)], ['音楽']),
               ],
             ),
           ],
@@ -944,8 +932,8 @@ const musicCheckboxView = (
     h,
   )
 
-type MusicConfig<K> = Readonly<{
-  learned: ReadonlyArray<K>
+type MusicConfig<K extends string> = Readonly<{
+  learned: Readonly<Record<K, boolean>>
   onToggle: (key: K, isLearned: boolean) => Message
 }>
 
@@ -980,7 +968,7 @@ const recordEditorView = <K extends string>(
                   musicCheckboxView(
                     `${idPrefix}-${index}-music`,
                     key,
-                    Array.contains(learned, key),
+                    learned[key],
                     isLearned => onToggle(key, isLearned),
                     h,
                   ),
@@ -1175,13 +1163,11 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             'terrain',
             draft.terrainBonuses,
             (terrain, value) => Message.UpdatedTerrainBonus({ terrain, value }),
-            canLearnMusic(draft.classes)
-              ? Option.some({
-                  learned: draft.learnedTerrainMusic,
-                  onToggle: (terrain: Terrain, isLearned: boolean) =>
-                    Message.ToggledTerrainMusic({ terrain, isLearned }),
-                })
-              : Option.none(),
+            whenCanLearnMusic(draft.classes, {
+              learned: draft.learnedTerrainMusic,
+              onToggle: (terrain: Terrain, isLearned: boolean) =>
+                Message.ToggledTerrainMusic({ terrain, isLearned }),
+            }),
             h,
           ),
           recordEditorView(
@@ -1190,13 +1176,11 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             draft.weatherPenalties,
             (weather, value) =>
               Message.UpdatedWeatherPenalty({ weather, value }),
-            canLearnMusic(draft.classes)
-              ? Option.some({
-                  learned: draft.learnedWeatherMusic,
-                  onToggle: (weather: Weather, isLearned: boolean) =>
-                    Message.ToggledWeatherMusic({ weather, isLearned }),
-                })
-              : Option.none(),
+            whenCanLearnMusic(draft.classes, {
+              learned: draft.learnedWeatherMusic,
+              onToggle: (weather: Weather, isLearned: boolean) =>
+                Message.ToggledWeatherMusic({ weather, isLearned }),
+            }),
             h,
           ),
         ],

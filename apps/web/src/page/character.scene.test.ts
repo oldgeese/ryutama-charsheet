@@ -39,8 +39,14 @@ describe('character page view', () => {
           id: 'lulu',
           sheet: {
             ...lulu,
-            learnedTerrainMusic: ['森'],
-            learnedWeatherMusic: ['雪'],
+            learnedTerrainMusic: {
+              ...emptySheet.learnedTerrainMusic,
+              森: true,
+            },
+            learnedWeatherMusic: {
+              ...emptySheet.learnedWeatherMusic,
+              雪: true,
+            },
           },
         }),
       ),
@@ -72,7 +78,10 @@ describe('character page view', () => {
           sheet: {
             ...lulu,
             classes: ['ヒーラー'],
-            learnedTerrainMusic: ['森'],
+            learnedTerrainMusic: {
+              ...emptySheet.learnedTerrainMusic,
+              森: true,
+            },
           },
         }),
       ),
