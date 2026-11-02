@@ -685,7 +685,7 @@ const textareaFieldView = (
           [h.Class('sm:col-span-2')],
           [
             h.label([...attributes.label, h.Class(labelStyle)], [label]),
-            h.textarea([...attributes.textarea, h.Class(inputStyle)]),
+            h.textarea([...attributes.textarea, h.Class(textareaStyle)]),
           ],
         ),
     },
@@ -1457,6 +1457,8 @@ export const view = Submodel.defineView<Model, Message>((model, h): Html =>
 
 const inputStyle =
   'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-40'
+
+const textareaStyle = `${inputStyle} field-sizing-content min-h-[calc(3lh+0.625rem)] resize-none`
 
 const primaryButtonStyle =
   'bg-black text-white hover:bg-gray-700 disabled:opacity-50 px-4 py-2 rounded transition'
