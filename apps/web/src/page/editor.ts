@@ -623,6 +623,8 @@ const sectionView = (
     ],
   )
 
+// NOTE: grid-cols-1 は既定の1列と同じに見えるが、消すと列幅が内容に合わせて広がり、
+// field-sizing-content の textarea に切れ目のない長い文字列を入れるとページが横にはみ出す。
 const fieldGridView = (
   fields: ReadonlyArray<Html>,
   h: HtmlBuilder<Message>,
