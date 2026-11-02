@@ -623,10 +623,12 @@ const sectionView = (
     ],
   )
 
+// NOTE: grid-cols-1 は既定の1列と同じに見えるが、消すと列幅が内容に合わせて広がり、
+// field-sizing-content の textarea に切れ目のない長い文字列を入れるとページが横にはみ出す。
 const fieldGridView = (
   fields: ReadonlyArray<Html>,
   h: HtmlBuilder<Message>,
-): Html => h.div([h.Class('grid gap-3 sm:grid-cols-2')], fields)
+): Html => h.div([h.Class('grid grid-cols-1 gap-3 sm:grid-cols-2')], fields)
 
 const labelStyle = 'block text-sm text-gray-600'
 
@@ -685,7 +687,7 @@ const textareaFieldView = (
           [h.Class('sm:col-span-2')],
           [
             h.label([...attributes.label, h.Class(labelStyle)], [label]),
-            h.textarea([...attributes.textarea, h.Class(inputStyle)]),
+            h.textarea([...attributes.textarea, h.Class(textareaStyle)]),
           ],
         ),
     },
@@ -1457,6 +1459,8 @@ export const view = Submodel.defineView<Model, Message>((model, h): Html =>
 
 const inputStyle =
   'w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-40'
+
+const textareaStyle = `${inputStyle} field-sizing-content min-h-[calc(3lh+0.625rem)] supports-[field-sizing:content]:resize-none`
 
 const primaryButtonStyle =
   'bg-black text-white hover:bg-gray-700 disabled:opacity-50 px-4 py-2 rounded transition'
