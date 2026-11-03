@@ -1,7 +1,7 @@
 import { Schema } from 'effect'
 import { describe, expect, test } from 'vitest'
 
-import { CharacterSheet, emptySheet } from './sheet.js'
+import { CharacterSheet, emptySheet, upgradeStoredSheet } from './sheet.js'
 
 const isSheet = Schema.is(CharacterSheet)
 
@@ -80,8 +80,8 @@ describe('CharacterSheet', () => {
   })
 
   test('requires every terrain and weather key', () => {
-    const { 草原: _, ...terrainBonuses } = emptySheet.terrainBonuses
-    expect(isSheet({ ...emptySheet, terrainBonuses })).toBe(false)
+    const { 草原: _, ...terrainGearModifiers } = emptySheet.terrainGearModifiers
+    expect(isSheet({ ...emptySheet, terrainGearModifiers })).toBe(false)
   })
 
   test('keeps learned terrain and weather music through decoding', () => {
@@ -128,5 +128,43 @@ describe('CharacterSheet', () => {
   test('survives a JSON round trip', () => {
     const decode = Schema.decodeUnknownSync(CharacterSheet)
     expect(decode(JSON.parse(JSON.stringify(emptySheet)))).toEqual(emptySheet)
+  })
+})
+
+describe('upgradeStoredSheet', () => {
+  const decode = Schema.decodeUnknownSync(CharacterSheet)
+
+  test('reads the gear modifiers saved under their old field names', () => {
+    const {
+      terrainGearModifiers: _terrain,
+      weatherGearModifiers: _weather,
+      ...rest
+    } = emptySheet
+    const stored = {
+      ...rest,
+      terrainBonuses: { ...emptySheet.terrainGearModifiers, 森: '+1' },
+      weatherPenalties: { ...emptySheet.weatherGearModifiers, 雪: '-2' },
+    }
+
+    const sheet = decode(upgradeStoredSheet(stored))
+
+    expect(sheet.terrainGearModifiers.森).toBe('+1')
+    expect(sheet.weatherGearModifiers.雪).toBe('-2')
+    expect(sheet).not.toHaveProperty('terrainBonuses')
+    expect(sheet).not.toHaveProperty('weatherPenalties')
+  })
+
+  test('leaves a sheet saved under the current field names unchanged', () => {
+    const sheet = {
+      ...emptySheet,
+      terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 森: '+1' },
+    }
+
+    expect(upgradeStoredSheet(sheet)).toEqual(sheet)
+  })
+
+  test('passes through values that are not objects', () => {
+    expect(upgradeStoredSheet(undefined)).toBeUndefined()
+    expect(upgradeStoredSheet('sheet')).toBe('sheet')
   })
 })

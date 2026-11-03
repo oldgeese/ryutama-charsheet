@@ -26,7 +26,7 @@ const lulu: CharacterSheet = {
       notes: '',
     },
   ],
-  terrainBonuses: { ...emptySheet.terrainBonuses, 草原: '+1' },
+  terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 草原: '+1' },
   memo: '一行目\n二行目',
 }
 
@@ -51,13 +51,13 @@ describe('character page view', () => {
         }),
       ),
       inside(
-        role('table', { name: '地形ごとのチェックボーナス' }),
+        role('table', { name: '地形チェックの装備による修正値' }),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '森—✓' })).toExist(),
         expect(role('row', { name: '草原+1—' })).toExist(),
       ),
       inside(
-        role('table', { name: '天候ごとのチェックペナルティ' }),
+        role('table', { name: '天候チェックの装備による修正値' }),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '雪—✓' })).toExist(),
         expect(role('row', { name: '雨——' })).toExist(),
@@ -86,12 +86,12 @@ describe('character page view', () => {
         }),
       ),
       inside(
-        role('table', { name: '地形ごとのチェックボーナス' }),
+        role('table', { name: '地形チェックの装備による修正値' }),
         expect(role('columnheader', { name: '音楽' })).not.toExist(),
         expect(role('row', { name: '森—' })).toExist(),
       ),
       inside(
-        role('table', { name: '天候ごとのチェックペナルティ' }),
+        role('table', { name: '天候チェックの装備による修正値' }),
         expect(role('columnheader', { name: '音楽' })).not.toExist(),
       ),
     )

@@ -7,6 +7,7 @@ import {
   CHARACTER_SUMMARIES,
   CharacterSheet,
   CharacterSummary,
+  upgradeStoredSheet,
 } from '@ryutama/character'
 
 import { type CharacterStore } from './characters.js'
@@ -58,7 +59,7 @@ export const firestoreStore = (db: Firestore): CharacterStore => {
       }
       const { createdAt: _, ...summaryFields } = summary.data() ?? {}
       return {
-        sheet: decodeSheet(character.get('sheet')),
+        sheet: decodeSheet(upgradeStoredSheet(character.get('sheet'))),
         summary: decodeSummary(summaryFields),
         secret: decodeSecret(secret.data()),
         createdAt: createdAt.toDate(),

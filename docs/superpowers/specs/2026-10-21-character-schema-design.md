@@ -40,8 +40,8 @@
 | 武器 | `weapons` | `{ name, accuracy, damage, durability, notes }` の配列 |
 | 盾・鎧 | `armors` | `{ name, defense, penalty, durability, notes }` の配列 |
 | 旅装 | `travelGear` | `{ name, notes }` の配列 |
-| 地形ごとのチェックボーナス | `terrainBonuses` | 11 の地形すべてをキーに持つ Record（値は文字列） |
-| 天候ごとのチェックペナルティ | `weatherPenalties` | 11 の天候すべてをキーに持つ Record（値は文字列） |
+| 地形チェックの装備による修正値 | `terrainGearModifiers` | 11 の地形すべてをキーに持つ Record（値は文字列） |
+| 天候チェックの装備による修正値 | `weatherGearModifiers` | 11 の天候すべてをキーに持つ Record（値は文字列） |
 | 憶えた地形の音楽 | `learnedTerrainMusic` | 11 の地形すべてをキーに持つ Record（値は真偽値）。同じ音楽は重ねて憶えられないので配列にしない |
 | 憶えた天候の音楽 | `learnedWeatherMusic` | 11 の天候すべてをキーに持つ Record（値は真偽値）。同じ音楽は重ねて憶えられないので配列にしない |
 | 状態異常 | `statusEffects` | 6 つの状態異常すべてをキーに持つ Record（値は文字列） |

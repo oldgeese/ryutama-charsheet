@@ -168,8 +168,8 @@ export const Message = defineMessageUnion({
     field: TravelGearField,
     value: Schema.String,
   },
-  UpdatedTerrainBonus: { terrain: Terrain, value: Schema.String },
-  UpdatedWeatherPenalty: { weather: Weather, value: Schema.String },
+  UpdatedTerrainGearModifier: { terrain: Terrain, value: Schema.String },
+  UpdatedWeatherGearModifier: { weather: Weather, value: Schema.String },
   ToggledTerrainMusic: { terrain: Terrain, isLearned: Schema.Boolean },
   ToggledWeatherMusic: { weather: Weather, isLearned: Schema.Boolean },
   UpdatedStatusEffect: { effect: StatusEffect, value: Schema.String },
@@ -538,15 +538,21 @@ export const update = (model: Model, message: Message) =>
           [field]: value,
         })),
       })),
-    UpdatedTerrainBonus: ({ terrain, value }) =>
+    UpdatedTerrainGearModifier: ({ terrain, value }) =>
       editDraft(model, draft => ({
         ...draft,
-        terrainBonuses: { ...draft.terrainBonuses, [terrain]: value },
+        terrainGearModifiers: {
+          ...draft.terrainGearModifiers,
+          [terrain]: value,
+        },
       })),
-    UpdatedWeatherPenalty: ({ weather, value }) =>
+    UpdatedWeatherGearModifier: ({ weather, value }) =>
       editDraft(model, draft => ({
         ...draft,
-        weatherPenalties: { ...draft.weatherPenalties, [weather]: value },
+        weatherGearModifiers: {
+          ...draft.weatherGearModifiers,
+          [weather]: value,
+        },
       })),
     ToggledTerrainMusic: ({ terrain, isLearned }) =>
       editDraft(model, draft => ({
@@ -1161,10 +1167,11 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
         '地形と天候',
         [
           recordEditorView(
-            '地形ごとのチェックボーナス',
+            '地形チェックの装備による修正値',
             'terrain',
-            draft.terrainBonuses,
-            (terrain, value) => Message.UpdatedTerrainBonus({ terrain, value }),
+            draft.terrainGearModifiers,
+            (terrain, value) =>
+              Message.UpdatedTerrainGearModifier({ terrain, value }),
             whenCanLearnMusic(draft.classes, {
               learned: draft.learnedTerrainMusic,
               onToggle: (terrain: Terrain, isLearned: boolean) =>
@@ -1173,11 +1180,11 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             h,
           ),
           recordEditorView(
-            '天候ごとのチェックペナルティ',
+            '天候チェックの装備による修正値',
             'weather',
-            draft.weatherPenalties,
+            draft.weatherGearModifiers,
             (weather, value) =>
-              Message.UpdatedWeatherPenalty({ weather, value }),
+              Message.UpdatedWeatherGearModifier({ weather, value }),
             whenCanLearnMusic(draft.classes, {
               learned: draft.learnedWeatherMusic,
               onToggle: (weather: Weather, isLearned: boolean) =>

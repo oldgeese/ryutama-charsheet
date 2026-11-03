@@ -16,6 +16,7 @@ import {
   type CreateCharacterRequest,
   type DuplicateCharacterRequest,
   type UpdateCharacterRequest,
+  upgradeStoredSheet,
 } from '@ryutama/character'
 
 import { ListedCharacter } from '../character'
@@ -48,9 +49,7 @@ export const fetchListedCharacters = Effect.gen(function* () {
   )
 })
 
-const decodeStoredCharacter = Schema.decodeUnknownOption(
-  Schema.Struct({ sheet: CharacterSheet }),
-)
+const decodeStoredSheet = Schema.decodeUnknownOption(CharacterSheet)
 
 // ドキュメントがなければ Option.none を返す
 export const fetchCharacter = (id: string) =>
@@ -63,8 +62,8 @@ export const fetchCharacter = (id: string) =>
     if (!snapshot.exists()) {
       return Option.none<CharacterSheet>()
     }
-    const { sheet } = yield* Option.match(
-      decodeStoredCharacter(snapshot.data()),
+    const sheet = yield* Option.match(
+      decodeStoredSheet(upgradeStoredSheet(snapshot.get('sheet'))),
       {
         onNone: () =>
           Effect.fail(

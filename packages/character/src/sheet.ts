@@ -85,8 +85,9 @@ export const CharacterSheet = Schema.Struct({
   weapons: Schema.Array(Weapon),
   armors: Schema.Array(Armor),
   travelGear: Schema.Array(TravelGear),
-  terrainBonuses: Schema.Record(Terrain, Schema.String),
-  weatherPenalties: Schema.Record(Weather, Schema.String),
+  // 「地形+天候」を目標値とするチェックの、装備による修正値
+  terrainGearModifiers: Schema.Record(Terrain, Schema.String),
+  weatherGearModifiers: Schema.Record(Weather, Schema.String),
   // 同じ音楽を重ねて憶えることはないので、地形や天候ごとの有無で持つ
   learnedTerrainMusic: Schema.Record(Terrain, Schema.Boolean),
   learnedWeatherMusic: Schema.Record(Weather, Schema.Boolean),
@@ -121,7 +122,7 @@ export const emptySheet: CharacterSheet = {
   weapons: [],
   armors: [],
   travelGear: [],
-  terrainBonuses: {
+  terrainGearModifiers: {
     草原: '',
     荒野: '',
     林: '',
@@ -134,7 +135,7 @@ export const emptySheet: CharacterSheet = {
     密林: '',
     高山: '',
   },
-  weatherPenalties: {
+  weatherGearModifiers: {
     雨: '',
     強風: '',
     霧: '',
@@ -181,4 +182,27 @@ export const emptySheet: CharacterSheet = {
     ハイ: '',
     ショック: '',
   },
+}
+
+// 改名前の項目名で保存されたシートを、今の項目名に読み替える。
+// 保存済みのドキュメントは書き換えないので、読み込むたびにデコードの前に通す
+const renamedFields = [
+  ['terrainBonuses', 'terrainGearModifiers'],
+  ['weatherPenalties', 'weatherGearModifiers'],
+] as const
+
+export const upgradeStoredSheet = (stored: unknown): unknown => {
+  if (typeof stored !== 'object' || stored === null) {
+    return stored
+  }
+  const upgraded: Record<string, unknown> = { ...stored }
+  for (const [oldName, newName] of renamedFields) {
+    if (oldName in upgraded) {
+      if (!(newName in upgraded)) {
+        upgraded[newName] = upgraded[oldName]
+      }
+      delete upgraded[oldName]
+    }
+  }
+  return upgraded
 }
