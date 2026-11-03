@@ -5,16 +5,12 @@ import { defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 
 import { Button } from '@foldkit/ui'
-import {
-  CharacterSheet,
-  terrainGearModifiersLabel,
-  weatherGearModifiersLabel,
-  whenCanLearnMusic,
-} from '@ryutama/character'
+import { CharacterSheet, whenCanLearnMusic } from '@ryutama/character'
 
 import { fetchCharacter } from '../firebase/characters'
 import type { FirebaseService } from '../firebase/service'
 import { editCharacterRouter, topRouter } from '../route'
+import { terrainGearModifiersLabel, weatherGearModifiersLabel } from './labels'
 
 // MODEL
 

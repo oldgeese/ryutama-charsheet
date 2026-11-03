@@ -95,12 +95,6 @@ export const CharacterSheet = Schema.Struct({
 })
 export type CharacterSheet = typeof CharacterSheet.Type
 
-// 装備による修正値の表名。表示画面と編集画面で同じ名前を使う
-export const terrainGearModifiersLabel =
-  '地形+天候チェックの装備による修正値（地形）'
-export const weatherGearModifiersLabel =
-  '地形+天候チェックの装備による修正値（天候）'
-
 export const emptySheet: CharacterSheet = {
   dragonName: '',
   createdOn: '',

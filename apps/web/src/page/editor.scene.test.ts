@@ -15,12 +15,7 @@ import {
 import { describe, test } from 'vitest'
 
 import { Dialog } from '@foldkit/ui'
-import {
-  type CharacterSheet,
-  emptySheet,
-  terrainGearModifiersLabel,
-  weatherGearModifiersLabel,
-} from '@ryutama/character'
+import { type CharacterSheet, emptySheet } from '@ryutama/character'
 
 import {
   CreateCharacter,
@@ -34,6 +29,7 @@ import {
   update,
   view,
 } from './editor'
+import { terrainGearModifiersLabel, weatherGearModifiersLabel } from './labels'
 
 const lulu: CharacterSheet = {
   ...emptySheet,

@@ -1,14 +1,10 @@
 import { expect, given, inside, role, scene, text } from 'foldkit/scene'
 import { describe, test } from 'vitest'
 
-import {
-  type CharacterSheet,
-  emptySheet,
-  terrainGearModifiersLabel,
-  weatherGearModifiersLabel,
-} from '@ryutama/character'
+import { type CharacterSheet, emptySheet } from '@ryutama/character'
 
 import { Sheet, update, view } from './character'
+import { terrainGearModifiersLabel, weatherGearModifiersLabel } from './labels'
 
 const lulu: CharacterSheet = {
   ...emptySheet,
@@ -56,9 +52,7 @@ describe('character page view', () => {
         }),
       ),
       inside(
-        role('table', {
-          name: terrainGearModifiersLabel,
-        }),
+        role('table', { name: terrainGearModifiersLabel }),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '森—✓' })).toExist(),
         expect(role('row', { name: '草原+1—' })).toExist(),
@@ -93,9 +87,7 @@ describe('character page view', () => {
         }),
       ),
       inside(
-        role('table', {
-          name: terrainGearModifiersLabel,
-        }),
+        role('table', { name: terrainGearModifiersLabel }),
         expect(role('columnheader', { name: '音楽' })).not.toExist(),
         expect(role('row', { name: '森—' })).toExist(),
       ),

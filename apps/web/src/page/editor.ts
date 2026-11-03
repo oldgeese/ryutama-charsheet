@@ -19,8 +19,6 @@ import {
   StatusEffect,
   Terrain,
   Weather,
-  terrainGearModifiersLabel,
-  weatherGearModifiersLabel,
   whenCanLearnMusic,
 } from '@ryutama/character'
 
@@ -33,6 +31,7 @@ import {
 } from '../firebase/characters'
 import type { FirebaseCallError, FirebaseService } from '../firebase/service'
 import { characterRouter, topRouter } from '../route'
+import { terrainGearModifiersLabel, weatherGearModifiersLabel } from './labels'
 
 // MODEL
 
