@@ -1167,7 +1167,7 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
         '地形と天候',
         [
           recordEditorView(
-            '地形チェックの装備による修正値',
+            '地形+天候チェックの装備による修正値（地形）',
             'terrain',
             draft.terrainGearModifiers,
             (terrain, value) =>
@@ -1180,7 +1180,7 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             h,
           ),
           recordEditorView(
-            '天候チェックの装備による修正値',
+            '地形+天候チェックの装備による修正値（天候）',
             'weather',
             draft.weatherGearModifiers,
             (weather, value) =>

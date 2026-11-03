@@ -382,7 +382,7 @@ const sheetView = (
         '地形と天候',
         [
           recordTableView(
-            shownCaption('地形チェックの装備による修正値'),
+            shownCaption('地形+天候チェックの装備による修正値（地形）'),
             '地形',
             '修正値',
             sheet.terrainGearModifiers,
@@ -390,7 +390,7 @@ const sheetView = (
             h,
           ),
           recordTableView(
-            shownCaption('天候チェックの装備による修正値'),
+            shownCaption('地形+天候チェックの装備による修正値（天候）'),
             '天候',
             '修正値',
             sheet.weatherGearModifiers,

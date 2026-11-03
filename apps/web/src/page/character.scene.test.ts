@@ -51,13 +51,15 @@ describe('character page view', () => {
         }),
       ),
       inside(
-        role('table', { name: '地形チェックの装備による修正値' }),
+        role('table', {
+          name: '地形+天候チェックの装備による修正値（地形）',
+        }),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '森—✓' })).toExist(),
         expect(role('row', { name: '草原+1—' })).toExist(),
       ),
       inside(
-        role('table', { name: '天候チェックの装備による修正値' }),
+        role('table', { name: '地形+天候チェックの装備による修正値（天候）' }),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '雪—✓' })).toExist(),
         expect(role('row', { name: '雨——' })).toExist(),
@@ -86,12 +88,14 @@ describe('character page view', () => {
         }),
       ),
       inside(
-        role('table', { name: '地形チェックの装備による修正値' }),
+        role('table', {
+          name: '地形+天候チェックの装備による修正値（地形）',
+        }),
         expect(role('columnheader', { name: '音楽' })).not.toExist(),
         expect(role('row', { name: '森—' })).toExist(),
       ),
       inside(
-        role('table', { name: '天候チェックの装備による修正値' }),
+        role('table', { name: '地形+天候チェックの装備による修正値（天候）' }),
         expect(role('columnheader', { name: '音楽' })).not.toExist(),
       ),
     )
