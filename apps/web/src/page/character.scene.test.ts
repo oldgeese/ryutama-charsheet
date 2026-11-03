@@ -53,12 +53,14 @@ describe('character page view', () => {
       ),
       inside(
         role('table', { name: terrainGearModifiersLabel }),
+        expect(role('columnheader', { name: '修正値' })).toExist(),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '森—✓' })).toExist(),
         expect(role('row', { name: '草原+1—' })).toExist(),
       ),
       inside(
         role('table', { name: weatherGearModifiersLabel }),
+        expect(role('columnheader', { name: '修正値' })).toExist(),
         expect(role('columnheader', { name: '音楽' })).toExist(),
         expect(role('row', { name: '雪—✓' })).toExist(),
         expect(role('row', { name: '雨——' })).toExist(),
