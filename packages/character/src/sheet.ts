@@ -1,4 +1,4 @@
-import { Schema, SchemaTransformation } from 'effect'
+import { Schema } from 'effect'
 
 import {
   AbilityDie,
@@ -183,41 +183,3 @@ export const emptySheet: CharacterSheet = {
     ショック: '',
   },
 }
-
-// 改名前の項目名（Issue #31）のシート。保存済みのドキュメントや、
-// 改名前の画面から届く保存リクエストに残っている
-const {
-  terrainGearModifiers: terrainBonuses,
-  weatherGearModifiers: weatherPenalties,
-  ...unrenamedFields
-} = CharacterSheet.fields
-
-const LegacyCharacterSheet = Schema.Struct({
-  ...unrenamedFields,
-  terrainBonuses,
-  weatherPenalties,
-}).pipe(
-  Schema.decodeTo(
-    CharacterSheet,
-    SchemaTransformation.transform({
-      decode: ({ terrainBonuses, weatherPenalties, ...rest }) => ({
-        ...rest,
-        terrainGearModifiers: terrainBonuses,
-        weatherGearModifiers: weatherPenalties,
-      }),
-      encode: ({ terrainGearModifiers, weatherGearModifiers, ...rest }) => ({
-        ...rest,
-        terrainBonuses: terrainGearModifiers,
-        weatherPenalties: weatherGearModifiers,
-      }),
-    }),
-  ),
-)
-
-// 今の項目名と改名前の項目名のどちらのシートも CharacterSheet にデコードする。
-// 外から届くシート（Firestore のドキュメント、保存リクエスト）はこれでデコードする。
-// 今の項目名を先に試すので、両方の名前を持つシートは今の項目名の値を使う
-export const CharacterSheetFromAnyVersion = Schema.Union([
-  CharacterSheet,
-  LegacyCharacterSheet,
-])

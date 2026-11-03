@@ -12,8 +12,7 @@ import {
   CHARACTERS,
   CHARACTER_SUMMARIES,
   CharacterIdResponse,
-  type CharacterSheet,
-  CharacterSheetFromAnyVersion,
+  CharacterSheet,
   type CreateCharacterRequest,
   type DuplicateCharacterRequest,
   type UpdateCharacterRequest,
@@ -49,8 +48,8 @@ export const fetchListedCharacters = Effect.gen(function* () {
   )
 })
 
-const decodeStoredSheet = Schema.decodeUnknownOption(
-  CharacterSheetFromAnyVersion,
+const decodeStoredCharacter = Schema.decodeUnknownOption(
+  Schema.Struct({ sheet: CharacterSheet }),
 )
 
 // ドキュメントがなければ Option.none を返す
@@ -64,8 +63,8 @@ export const fetchCharacter = (id: string) =>
     if (!snapshot.exists()) {
       return Option.none<CharacterSheet>()
     }
-    const sheet = yield* Option.match(
-      decodeStoredSheet(snapshot.get('sheet')),
+    const { sheet } = yield* Option.match(
+      decodeStoredCharacter(snapshot.data()),
       {
         onNone: () =>
           Effect.fail(

@@ -1,11 +1,7 @@
 import { Schema } from 'effect'
 import { describe, expect, test } from 'vitest'
 
-import {
-  CharacterSheet,
-  CharacterSheetFromAnyVersion,
-  emptySheet,
-} from './sheet.js'
+import { CharacterSheet, emptySheet } from './sheet.js'
 
 const isSheet = Schema.is(CharacterSheet)
 
@@ -132,50 +128,5 @@ describe('CharacterSheet', () => {
   test('survives a JSON round trip', () => {
     const decode = Schema.decodeUnknownSync(CharacterSheet)
     expect(decode(JSON.parse(JSON.stringify(emptySheet)))).toEqual(emptySheet)
-  })
-})
-
-// 改名前の項目名（terrainBonuses / weatherPenalties）で書かれたシート
-const toLegacy = (sheet: CharacterSheet) => {
-  const { terrainGearModifiers, weatherGearModifiers, ...rest } = sheet
-  return {
-    ...rest,
-    terrainBonuses: terrainGearModifiers,
-    weatherPenalties: weatherGearModifiers,
-  }
-}
-
-describe('CharacterSheetFromAnyVersion', () => {
-  const decode = Schema.decodeUnknownSync(CharacterSheetFromAnyVersion)
-  const isAnyVersion = Schema.is(CharacterSheetFromAnyVersion)
-
-  const sheet: CharacterSheet = {
-    ...emptySheet,
-    terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 森: '+1' },
-    weatherGearModifiers: { ...emptySheet.weatherGearModifiers, 雪: '-2' },
-  }
-
-  test('decodes a sheet written under the current field names', () => {
-    expect(decode(sheet)).toStrictEqual(sheet)
-  })
-
-  test('decodes a sheet written under the old field names into the current ones', () => {
-    // 改名前の項目名が残らないことも、シート全体を比べて確かめる
-    expect(decode(toLegacy(sheet))).toStrictEqual(sheet)
-  })
-
-  test('prefers the current field names when a sheet has both', () => {
-    const legacy = toLegacy({
-      ...emptySheet,
-      terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 森: '-9' },
-      weatherGearModifiers: { ...emptySheet.weatherGearModifiers, 雪: '-9' },
-    })
-
-    expect(decode({ ...legacy, ...sheet })).toStrictEqual(sheet)
-  })
-
-  test('rejects values that are not sheets', () => {
-    expect(isAnyVersion(undefined)).toBe(false)
-    expect(isAnyVersion([sheet])).toBe(false)
   })
 })

@@ -5,14 +5,14 @@ import {
   CHARACTERS,
   CHARACTER_SECRETS,
   CHARACTER_SUMMARIES,
-  CharacterSheetFromAnyVersion,
+  CharacterSheet,
   CharacterSummary,
 } from '@ryutama/character'
 
 import { type CharacterStore } from './characters.js'
 
 const StoredSecret = Schema.Struct({ salt: Schema.String, hash: Schema.String })
-const decodeSheet = Schema.decodeUnknownSync(CharacterSheetFromAnyVersion)
+const decodeSheet = Schema.decodeUnknownSync(CharacterSheet)
 const decodeSummary = Schema.decodeUnknownSync(CharacterSummary)
 const decodeSecret = Schema.decodeUnknownSync(StoredSecret)
 
