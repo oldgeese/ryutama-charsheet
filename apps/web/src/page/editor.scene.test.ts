@@ -15,7 +15,12 @@ import {
 import { describe, test } from 'vitest'
 
 import { Dialog } from '@foldkit/ui'
-import { type CharacterSheet, emptySheet } from '@ryutama/character'
+import {
+  type CharacterSheet,
+  emptySheet,
+  terrainGearModifiersLabel,
+  weatherGearModifiersLabel,
+} from '@ryutama/character'
 
 import {
   CreateCharacter,
@@ -53,6 +58,15 @@ const editingLulu = (): Model =>
   ).model
 
 describe('editor page view', () => {
+  test('names the gear modifier groups for terrain and weather', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      expect(role('group', { name: terrainGearModifiersLabel })).toExist(),
+      expect(role('group', { name: weatherGearModifiersLabel })).toExist(),
+    )
+  })
+
   test('a new character has a password field', () => {
     scene(
       { update, view },

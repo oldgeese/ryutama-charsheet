@@ -5,7 +5,12 @@ import { defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 
 import { Button } from '@foldkit/ui'
-import { CharacterSheet, whenCanLearnMusic } from '@ryutama/character'
+import {
+  CharacterSheet,
+  terrainGearModifiersLabel,
+  weatherGearModifiersLabel,
+  whenCanLearnMusic,
+} from '@ryutama/character'
 
 import { fetchCharacter } from '../firebase/characters'
 import type { FirebaseService } from '../firebase/service'
@@ -382,7 +387,7 @@ const sheetView = (
         '地形と天候',
         [
           recordTableView(
-            shownCaption('地形+天候チェックの装備による修正値（地形）'),
+            shownCaption(terrainGearModifiersLabel),
             '地形',
             '修正値',
             sheet.terrainGearModifiers,
@@ -390,7 +395,7 @@ const sheetView = (
             h,
           ),
           recordTableView(
-            shownCaption('地形+天候チェックの装備による修正値（天候）'),
+            shownCaption(weatherGearModifiersLabel),
             '天候',
             '修正値',
             sheet.weatherGearModifiers,

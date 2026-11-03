@@ -19,6 +19,8 @@ import {
   StatusEffect,
   Terrain,
   Weather,
+  terrainGearModifiersLabel,
+  weatherGearModifiersLabel,
   whenCanLearnMusic,
 } from '@ryutama/character'
 
@@ -1167,7 +1169,7 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
         '地形と天候',
         [
           recordEditorView(
-            '地形+天候チェックの装備による修正値（地形）',
+            terrainGearModifiersLabel,
             'terrain',
             draft.terrainGearModifiers,
             (terrain, value) =>
@@ -1180,7 +1182,7 @@ const sheetFormView = (draft: Draft, h: HtmlBuilder<Message>): Html =>
             h,
           ),
           recordEditorView(
-            '地形+天候チェックの装備による修正値（天候）',
+            weatherGearModifiersLabel,
             'weather',
             draft.weatherGearModifiers,
             (weather, value) =>
