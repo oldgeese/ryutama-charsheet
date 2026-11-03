@@ -1,7 +1,11 @@
 import { Schema } from 'effect'
 import { describe, expect, test } from 'vitest'
 
-import { CharacterSheet, emptySheet, upgradeStoredSheet } from './sheet.js'
+import {
+  CharacterSheet,
+  CharacterSheetFromAnyVersion,
+  emptySheet,
+} from './sheet.js'
 
 const isSheet = Schema.is(CharacterSheet)
 
@@ -131,40 +135,47 @@ describe('CharacterSheet', () => {
   })
 })
 
-describe('upgradeStoredSheet', () => {
-  const decode = Schema.decodeUnknownSync(CharacterSheet)
+// 改名前の項目名（terrainBonuses / weatherPenalties）で書かれたシート
+const toLegacy = (sheet: CharacterSheet) => {
+  const { terrainGearModifiers, weatherGearModifiers, ...rest } = sheet
+  return {
+    ...rest,
+    terrainBonuses: terrainGearModifiers,
+    weatherPenalties: weatherGearModifiers,
+  }
+}
 
-  test('reads the gear modifiers saved under their old field names', () => {
-    const {
-      terrainGearModifiers: _terrain,
-      weatherGearModifiers: _weather,
-      ...rest
-    } = emptySheet
-    const stored = {
-      ...rest,
-      terrainBonuses: { ...emptySheet.terrainGearModifiers, 森: '+1' },
-      weatherPenalties: { ...emptySheet.weatherGearModifiers, 雪: '-2' },
-    }
+describe('CharacterSheetFromAnyVersion', () => {
+  const decode = Schema.decodeUnknownSync(CharacterSheetFromAnyVersion)
+  const isAnyVersion = Schema.is(CharacterSheetFromAnyVersion)
 
-    const sheet = decode(upgradeStoredSheet(stored))
+  const sheet: CharacterSheet = {
+    ...emptySheet,
+    terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 森: '+1' },
+    weatherGearModifiers: { ...emptySheet.weatherGearModifiers, 雪: '-2' },
+  }
 
-    expect(sheet.terrainGearModifiers.森).toBe('+1')
-    expect(sheet.weatherGearModifiers.雪).toBe('-2')
-    expect(sheet).not.toHaveProperty('terrainBonuses')
-    expect(sheet).not.toHaveProperty('weatherPenalties')
+  test('decodes a sheet written under the current field names', () => {
+    expect(decode(sheet)).toStrictEqual(sheet)
   })
 
-  test('leaves a sheet saved under the current field names unchanged', () => {
-    const sheet = {
+  test('decodes a sheet written under the old field names into the current ones', () => {
+    // 改名前の項目名が残らないことも、シート全体を比べて確かめる
+    expect(decode(toLegacy(sheet))).toStrictEqual(sheet)
+  })
+
+  test('prefers the current field names when a sheet has both', () => {
+    const legacy = toLegacy({
       ...emptySheet,
-      terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 森: '+1' },
-    }
+      terrainGearModifiers: { ...emptySheet.terrainGearModifiers, 森: '-9' },
+      weatherGearModifiers: { ...emptySheet.weatherGearModifiers, 雪: '-9' },
+    })
 
-    expect(upgradeStoredSheet(sheet)).toEqual(sheet)
+    expect(decode({ ...legacy, ...sheet })).toStrictEqual(sheet)
   })
 
-  test('passes through values that are not objects', () => {
-    expect(upgradeStoredSheet(undefined)).toBeUndefined()
-    expect(upgradeStoredSheet('sheet')).toBe('sheet')
+  test('rejects values that are not sheets', () => {
+    expect(isAnyVersion(undefined)).toBe(false)
+    expect(isAnyVersion([sheet])).toBe(false)
   })
 })

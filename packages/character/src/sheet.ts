@@ -1,4 +1,4 @@
-import { Schema } from 'effect'
+import { Schema, SchemaTransformation } from 'effect'
 
 import {
   AbilityDie,
@@ -184,25 +184,40 @@ export const emptySheet: CharacterSheet = {
   },
 }
 
-// 改名前の項目名で保存されたシートを、今の項目名に読み替える。
-// 保存済みのドキュメントは書き換えないので、読み込むたびにデコードの前に通す
-const renamedFields = [
-  ['terrainBonuses', 'terrainGearModifiers'],
-  ['weatherPenalties', 'weatherGearModifiers'],
-] as const
+// 改名前の項目名（Issue #31）のシート。保存済みのドキュメントや、
+// 改名前の画面から届く保存リクエストに残っている
+const {
+  terrainGearModifiers: terrainBonuses,
+  weatherGearModifiers: weatherPenalties,
+  ...unrenamedFields
+} = CharacterSheet.fields
 
-export const upgradeStoredSheet = (stored: unknown): unknown => {
-  if (typeof stored !== 'object' || stored === null) {
-    return stored
-  }
-  const upgraded: Record<string, unknown> = { ...stored }
-  for (const [oldName, newName] of renamedFields) {
-    if (oldName in upgraded) {
-      if (!(newName in upgraded)) {
-        upgraded[newName] = upgraded[oldName]
-      }
-      delete upgraded[oldName]
-    }
-  }
-  return upgraded
-}
+const LegacyCharacterSheet = Schema.Struct({
+  ...unrenamedFields,
+  terrainBonuses,
+  weatherPenalties,
+}).pipe(
+  Schema.decodeTo(
+    CharacterSheet,
+    SchemaTransformation.transform({
+      decode: ({ terrainBonuses, weatherPenalties, ...rest }) => ({
+        ...rest,
+        terrainGearModifiers: terrainBonuses,
+        weatherGearModifiers: weatherPenalties,
+      }),
+      encode: ({ terrainGearModifiers, weatherGearModifiers, ...rest }) => ({
+        ...rest,
+        terrainBonuses: terrainGearModifiers,
+        weatherPenalties: weatherGearModifiers,
+      }),
+    }),
+  ),
+)
+
+// 今の項目名と改名前の項目名のどちらのシートも CharacterSheet にデコードする。
+// 外から届くシート（Firestore のドキュメント、保存リクエスト）はこれでデコードする。
+// 今の項目名を先に試すので、両方の名前を持つシートは今の項目名の値を使う
+export const CharacterSheetFromAnyVersion = Schema.Union([
+  CharacterSheet,
+  LegacyCharacterSheet,
+])

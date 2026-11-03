@@ -12,11 +12,11 @@ import {
   CHARACTERS,
   CHARACTER_SUMMARIES,
   CharacterIdResponse,
-  CharacterSheet,
+  type CharacterSheet,
+  CharacterSheetFromAnyVersion,
   type CreateCharacterRequest,
   type DuplicateCharacterRequest,
   type UpdateCharacterRequest,
-  upgradeStoredSheet,
 } from '@ryutama/character'
 
 import { ListedCharacter } from '../character'
@@ -49,7 +49,9 @@ export const fetchListedCharacters = Effect.gen(function* () {
   )
 })
 
-const decodeStoredSheet = Schema.decodeUnknownOption(CharacterSheet)
+const decodeStoredSheet = Schema.decodeUnknownOption(
+  CharacterSheetFromAnyVersion,
+)
 
 // ドキュメントがなければ Option.none を返す
 export const fetchCharacter = (id: string) =>
@@ -63,7 +65,7 @@ export const fetchCharacter = (id: string) =>
       return Option.none<CharacterSheet>()
     }
     const sheet = yield* Option.match(
-      decodeStoredSheet(upgradeStoredSheet(snapshot.get('sheet'))),
+      decodeStoredSheet(snapshot.get('sheet')),
       {
         onNone: () =>
           Effect.fail(

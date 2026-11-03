@@ -1,6 +1,6 @@
 import { Schema } from 'effect'
 
-import { CharacterSheet } from './sheet.js'
+import { CharacterSheetFromAnyVersion } from './sheet.js'
 
 // Firestore のコレクション名。書き込みは Functions だけが行う
 export const CHARACTERS = 'characters'
@@ -9,14 +9,14 @@ export const CHARACTER_SECRETS = 'characterSecrets'
 
 // callable Functions の入出力
 export const CreateCharacterRequest = Schema.Struct({
-  sheet: CharacterSheet,
+  sheet: CharacterSheetFromAnyVersion,
   password: Schema.String.check(Schema.isMinLength(1)),
 })
 export type CreateCharacterRequest = typeof CreateCharacterRequest.Type
 
 export const UpdateCharacterRequest = Schema.Struct({
   id: Schema.String,
-  sheet: CharacterSheet,
+  sheet: CharacterSheetFromAnyVersion,
   password: Schema.String,
 })
 export type UpdateCharacterRequest = typeof UpdateCharacterRequest.Type

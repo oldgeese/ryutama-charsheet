@@ -108,6 +108,28 @@ describe('updateCharacter', () => {
     expect(records.get(id)?.sheet.learnedWeatherMusic.雪).toBe(true)
   })
 
+  test('accepts a sheet sent under the old gear modifier field names', async () => {
+    // デプロイ前に開いた画面は、改名前の項目名で保存リクエストを送ってくる
+    const { store, records } = makeStore()
+    const { id } = await createCharacter(
+      store,
+      { sheet, password: 'ひみつ' },
+      NOW,
+    )
+    const { terrainGearModifiers, weatherGearModifiers, ...rest } = sheet
+    const legacySheet = {
+      ...rest,
+      terrainBonuses: { ...terrainGearModifiers, 森: '+1' },
+      weatherPenalties: { ...weatherGearModifiers, 雪: '-2' },
+    }
+
+    await updateCharacter(store, { id, sheet: legacySheet, password: 'ひみつ' })
+
+    expect(records.get(id)?.sheet.terrainGearModifiers.森).toBe('+1')
+    expect(records.get(id)?.sheet.weatherGearModifiers.雪).toBe('-2')
+    expect(records.get(id)?.sheet).not.toHaveProperty('terrainBonuses')
+  })
+
   test('overwrites the sheet and summary when the password matches', async () => {
     const { store, records } = makeStore()
     const { id } = await createCharacter(

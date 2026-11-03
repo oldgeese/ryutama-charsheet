@@ -5,15 +5,14 @@ import {
   CHARACTERS,
   CHARACTER_SECRETS,
   CHARACTER_SUMMARIES,
-  CharacterSheet,
+  CharacterSheetFromAnyVersion,
   CharacterSummary,
-  upgradeStoredSheet,
 } from '@ryutama/character'
 
 import { type CharacterStore } from './characters.js'
 
 const StoredSecret = Schema.Struct({ salt: Schema.String, hash: Schema.String })
-const decodeSheet = Schema.decodeUnknownSync(CharacterSheet)
+const decodeSheet = Schema.decodeUnknownSync(CharacterSheetFromAnyVersion)
 const decodeSummary = Schema.decodeUnknownSync(CharacterSummary)
 const decodeSecret = Schema.decodeUnknownSync(StoredSecret)
 
@@ -59,7 +58,7 @@ export const firestoreStore = (db: Firestore): CharacterStore => {
       }
       const { createdAt: _, ...summaryFields } = summary.data() ?? {}
       return {
-        sheet: decodeSheet(upgradeStoredSheet(character.get('sheet'))),
+        sheet: decodeSheet(character.get('sheet')),
         summary: decodeSummary(summaryFields),
         secret: decodeSecret(secret.data()),
         createdAt: createdAt.toDate(),
