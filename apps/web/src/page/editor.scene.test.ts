@@ -53,6 +53,19 @@ const editingLulu = (): Model =>
   ).model
 
 describe('editor page view', () => {
+  test('names the gear modifier groups for terrain and weather', () => {
+    scene(
+      { update, view },
+      given(editingLulu()),
+      expect(
+        role('group', { name: '地形+天候チェックの装備による修正値（地形）' }),
+      ).toExist(),
+      expect(
+        role('group', { name: '地形+天候チェックの装備による修正値（天候）' }),
+      ).toExist(),
+    )
+  })
+
   test('a new character has a password field', () => {
     scene(
       { update, view },

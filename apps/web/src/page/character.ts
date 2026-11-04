@@ -10,6 +10,7 @@ import { CharacterSheet, whenCanLearnMusic } from '@ryutama/character'
 import { fetchCharacter } from '../firebase/characters'
 import type { FirebaseService } from '../firebase/service'
 import { editCharacterRouter, topRouter } from '../route'
+import { terrainGearModifiersLabel, weatherGearModifiersLabel } from './labels'
 
 // MODEL
 
@@ -382,18 +383,18 @@ const sheetView = (
         '地形と天候',
         [
           recordTableView(
-            shownCaption('地形ごとのチェックボーナス'),
+            shownCaption(terrainGearModifiersLabel),
             '地形',
-            'ボーナス',
-            sheet.terrainBonuses,
+            '修正値',
+            sheet.terrainGearModifiers,
             whenCanLearnMusic(sheet.classes, sheet.learnedTerrainMusic),
             h,
           ),
           recordTableView(
-            shownCaption('天候ごとのチェックペナルティ'),
+            shownCaption(weatherGearModifiersLabel),
             '天候',
-            'ペナルティ',
-            sheet.weatherPenalties,
+            '修正値',
+            sheet.weatherGearModifiers,
             whenCanLearnMusic(sheet.classes, sheet.learnedWeatherMusic),
             h,
           ),

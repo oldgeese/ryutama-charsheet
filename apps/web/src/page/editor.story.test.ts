@@ -279,13 +279,17 @@ describe('editor page: inputs', () => {
     story(
       update,
       given(initNew().model),
-      message(Message.UpdatedTerrainBonus({ terrain: '森', value: '+1' })),
-      message(Message.UpdatedWeatherPenalty({ weather: '雪', value: '-2' })),
+      message(
+        Message.UpdatedTerrainGearModifier({ terrain: '森', value: '+1' }),
+      ),
+      message(
+        Message.UpdatedWeatherGearModifier({ weather: '雪', value: '-2' }),
+      ),
       message(Message.UpdatedStatusEffect({ effect: '毒', value: '4' })),
       model(model => {
         const { draft } = editing(model)
-        expect(draft.terrainBonuses.森).toBe('+1')
-        expect(draft.weatherPenalties.雪).toBe('-2')
+        expect(draft.terrainGearModifiers.森).toBe('+1')
+        expect(draft.weatherGearModifiers.雪).toBe('-2')
         expect(draft.statusEffects.毒).toBe('4')
       }),
     )

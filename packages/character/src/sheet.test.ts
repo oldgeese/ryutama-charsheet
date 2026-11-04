@@ -80,8 +80,8 @@ describe('CharacterSheet', () => {
   })
 
   test('requires every terrain and weather key', () => {
-    const { 草原: _, ...terrainBonuses } = emptySheet.terrainBonuses
-    expect(isSheet({ ...emptySheet, terrainBonuses })).toBe(false)
+    const { 草原: _, ...terrainGearModifiers } = emptySheet.terrainGearModifiers
+    expect(isSheet({ ...emptySheet, terrainGearModifiers })).toBe(false)
   })
 
   test('keeps learned terrain and weather music through decoding', () => {
