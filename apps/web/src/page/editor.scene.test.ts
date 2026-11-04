@@ -29,7 +29,6 @@ import {
   update,
   view,
 } from './editor'
-import { terrainGearModifiersLabel, weatherGearModifiersLabel } from './labels'
 
 const lulu: CharacterSheet = {
   ...emptySheet,
@@ -58,8 +57,12 @@ describe('editor page view', () => {
     scene(
       { update, view },
       given(editingLulu()),
-      expect(role('group', { name: terrainGearModifiersLabel })).toExist(),
-      expect(role('group', { name: weatherGearModifiersLabel })).toExist(),
+      expect(
+        role('group', { name: '地形+天候チェックの装備による修正値（地形）' }),
+      ).toExist(),
+      expect(
+        role('group', { name: '地形+天候チェックの装備による修正値（天候）' }),
+      ).toExist(),
     )
   })
 
