@@ -4,6 +4,8 @@ import { defineConfig } from 'vite'
 import { foldkit } from '@foldkit/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 
+import { resolveAppVersion } from './src/version'
+
 const commitHash = (): string => {
   try {
     return execSync('git rev-parse --short HEAD').toString().trim()
@@ -12,8 +14,10 @@ const commitHash = (): string => {
   }
 }
 
-// 本番は CI が渡すリリースのタグ、それ以外はコミットハッシュをバージョンとして表示する
-const appVersion = process.env['VITE_APP_VERSION'] || commitHash()
+const appVersion = resolveAppVersion(
+  process.env['VITE_APP_VERSION'],
+  commitHash,
+)
 
 export default defineConfig({
   plugins: [tailwindcss(), foldkit()],

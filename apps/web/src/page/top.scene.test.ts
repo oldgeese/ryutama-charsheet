@@ -51,16 +51,15 @@ const loaded = (searchInput: string): Model => ({
 })
 
 describe('top page view', () => {
-  test('shows the version and links to the repository and X', () => {
+  test('links to the repository and X', () => {
     scene(
       { update, view },
       given(loaded('')),
-      expect(text('v0.0.0-test')).toExist(),
       expect(role('link', { name: 'GitHub リポジトリ' })).toHaveAttr(
         'href',
         'https://github.com/oldgeese/ryutama-charsheet',
       ),
-      expect(role('link', { name: 'X' })).toHaveAttr(
+      expect(role('link', { name: 'X（@oldgeese）' })).toHaveAttr(
         'href',
         'https://x.com/oldgeese',
       ),

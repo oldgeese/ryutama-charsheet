@@ -20,6 +20,7 @@ import {
   newCharacterRouter,
 } from '../route'
 import { isDevSite } from '../title'
+import { versionLabel } from '../version'
 
 // MODEL
 
@@ -513,7 +514,7 @@ const devSiteNoticeView = (h: HtmlBuilder<Message>): Html =>
       )
     : h.empty
 
-const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? ''
+const VERSION_LABEL = versionLabel(import.meta.env.VITE_APP_VERSION)
 const REPOSITORY_URL = 'https://github.com/oldgeese/ryutama-charsheet'
 const X_URL = 'https://x.com/oldgeese'
 
@@ -540,14 +541,17 @@ const siteInfoView = (h: HtmlBuilder<Message>): Html =>
   h.div(
     [h.Class('flex items-center justify-end gap-3 text-sm text-gray-500')],
     [
-      h.p([], [APP_VERSION]),
+      Option.match(VERSION_LABEL, {
+        onNone: () => h.empty,
+        onSome: label => h.p([], [label]),
+      }),
       iconLinkView(
         REPOSITORY_URL,
         'GitHub リポジトリ',
         'icon-[simple-icons--github]',
         h,
       ),
-      iconLinkView(X_URL, 'X', 'icon-[simple-icons--x]', h),
+      iconLinkView(X_URL, 'X（@oldgeese）', 'icon-[simple-icons--x]', h),
     ],
   )
 
