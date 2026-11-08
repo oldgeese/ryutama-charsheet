@@ -51,6 +51,44 @@ const loaded = (searchInput: string): Model => ({
 })
 
 describe('top page view', () => {
+  test('links to the repository and X', () => {
+    scene(
+      { update, view },
+      given(loaded('')),
+      expect(role('link', { name: 'GitHub リポジトリ' })).toHaveAttr(
+        'href',
+        'https://github.com/oldgeese/ryutama-charsheet',
+      ),
+      expect(role('link', { name: 'X（@oldgeese）' })).toHaveAttr(
+        'href',
+        'https://x.com/oldgeese',
+      ),
+    )
+  })
+
+  test('opens the repository and X links in a new tab', () => {
+    scene(
+      { update, view },
+      given(loaded('')),
+      expect(role('link', { name: 'GitHub リポジトリ' })).toHaveAttr(
+        'target',
+        '_blank',
+      ),
+      expect(role('link', { name: 'GitHub リポジトリ' })).toHaveAttr(
+        'rel',
+        'noopener noreferrer',
+      ),
+      expect(role('link', { name: 'X（@oldgeese）' })).toHaveAttr(
+        'target',
+        '_blank',
+      ),
+      expect(role('link', { name: 'X（@oldgeese）' })).toHaveAttr(
+        'rel',
+        'noopener noreferrer',
+      ),
+    )
+  })
+
   test('lists every character with a link to its page', () => {
     scene(
       { update, view },
