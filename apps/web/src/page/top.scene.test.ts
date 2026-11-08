@@ -66,6 +66,29 @@ describe('top page view', () => {
     )
   })
 
+  test('opens the repository and X links in a new tab', () => {
+    scene(
+      { update, view },
+      given(loaded('')),
+      expect(role('link', { name: 'GitHub リポジトリ' })).toHaveAttr(
+        'target',
+        '_blank',
+      ),
+      expect(role('link', { name: 'GitHub リポジトリ' })).toHaveAttr(
+        'rel',
+        'noopener noreferrer',
+      ),
+      expect(role('link', { name: 'X（@oldgeese）' })).toHaveAttr(
+        'target',
+        '_blank',
+      ),
+      expect(role('link', { name: 'X（@oldgeese）' })).toHaveAttr(
+        'rel',
+        'noopener noreferrer',
+      ),
+    )
+  })
+
   test('lists every character with a link to its page', () => {
     scene(
       { update, view },

@@ -531,7 +531,7 @@ const iconLinkView = (
       h.Target('_blank'),
       h.Rel('noopener noreferrer'),
       h.AriaLabel(label),
-      h.Class('text-gray-500 hover:text-gray-800'),
+      h.Class('flex hover:text-gray-800'),
     ],
     [h.span([h.AriaHidden(true), h.Class(`${iconClass} size-5`)])],
   )
