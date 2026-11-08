@@ -513,10 +513,49 @@ const devSiteNoticeView = (h: HtmlBuilder<Message>): Html =>
       )
     : h.empty
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? ''
+const REPOSITORY_URL = 'https://github.com/oldgeese/ryutama-charsheet'
+const X_URL = 'https://x.com/oldgeese'
+
+// NOTE: アイコンのクラス名は Tailwind が拾えるよう、文字列のまま書く
+const iconLinkView = (
+  href: string,
+  label: string,
+  iconClass: string,
+  h: HtmlBuilder<Message>,
+): Html =>
+  h.a(
+    [
+      h.Href(href),
+      h.Target('_blank'),
+      h.Rel('noopener noreferrer'),
+      h.AriaLabel(label),
+      h.Title(label),
+      h.Class('text-gray-500 hover:text-gray-800'),
+    ],
+    [h.span([h.AriaHidden(true), h.Class(`${iconClass} size-5`)])],
+  )
+
+const siteInfoView = (h: HtmlBuilder<Message>): Html =>
+  h.div(
+    [h.Class('flex items-center justify-end gap-3 text-sm text-gray-500')],
+    [
+      h.p([], [APP_VERSION]),
+      iconLinkView(
+        REPOSITORY_URL,
+        'GitHub リポジトリ',
+        'icon-[simple-icons--github]',
+        h,
+      ),
+      iconLinkView(X_URL, 'X', 'icon-[simple-icons--x]', h),
+    ],
+  )
+
 export const view = Submodel.defineView<Model, Message>((model, h): Html =>
   h.div(
     [h.Class('space-y-6')],
     [
+      siteInfoView(h),
       devSiteNoticeView(h),
       h.div(
         [h.Class('flex flex-wrap items-center gap-4')],
