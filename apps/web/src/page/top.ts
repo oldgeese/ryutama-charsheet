@@ -514,7 +514,7 @@ const devSiteNoticeView = (h: HtmlBuilder<Message>): Html =>
       )
     : h.empty
 
-const VERSION_LABEL = versionLabel(import.meta.env.VITE_APP_VERSION)
+const MAYBE_VERSION_LABEL = versionLabel(import.meta.env.VITE_APP_VERSION)
 const REPOSITORY_URL = 'https://github.com/oldgeese/ryutama-charsheet'
 const X_URL = 'https://x.com/oldgeese'
 
@@ -531,7 +531,6 @@ const iconLinkView = (
       h.Target('_blank'),
       h.Rel('noopener noreferrer'),
       h.AriaLabel(label),
-      h.Title(label),
       h.Class('text-gray-500 hover:text-gray-800'),
     ],
     [h.span([h.AriaHidden(true), h.Class(`${iconClass} size-5`)])],
@@ -541,7 +540,7 @@ const siteInfoView = (h: HtmlBuilder<Message>): Html =>
   h.div(
     [h.Class('flex items-center justify-end gap-3 text-sm text-gray-500')],
     [
-      Option.match(VERSION_LABEL, {
+      Option.match(MAYBE_VERSION_LABEL, {
         onNone: () => h.empty,
         onSome: label => h.p([], [label]),
       }),
